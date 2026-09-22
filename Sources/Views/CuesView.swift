@@ -8,11 +8,10 @@ struct CuesView: View {
             List {
                 Section("触发") {
                     toggleRow("每公里播报", sub: "距离、用时、当前速度、平均速度", $engine.settings.perKilometer)
-                    stepperRow("定时播报", sub: "听播客时的低频报数", value: engine.settings.intervalMinutes == 0 ? "关" : "\(engine.settings.intervalMinutes) 分钟", binding: $engine.settings.intervalMinutes)
+                    stepperRow("定时播报", sub: "每隔几分钟报一次里程和用时，听播客时用", value: engine.settings.intervalMinutes == 0 ? "关" : "\(engine.settings.intervalMinutes) 分钟", binding: $engine.settings.intervalMinutes)
                     toggleRow("心率区间提醒", sub: "进出区间时播报当前心率", $engine.settings.hrZoneAlert)
                     toggleRow("情绪价值", sub: "报数之外，顺便夸夸你", $engine.settings.emotionalValue)
                     toggleRow("自动暂停", sub: "速度低于 1 km/h 自动暂停，动起来自动继续", $engine.settings.autoPause)
-                    toggleRow("配速异常提醒", sub: "速度突然掉崖时提醒你（爆胎那种）", $engine.settings.paceAnomaly)
                 }
                 Section("音频") {
                     toggleRow("混音播放", sub: "播报压低音乐音量，不暂停不打断", $engine.settings.mixWithAudio)
