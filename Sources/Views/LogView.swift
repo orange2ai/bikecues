@@ -8,13 +8,22 @@ struct LogView: View {
     @State private var deleteFailed = false
     @State private var shareItems: [Any] = []
     @State private var exporting = false
+    @State private var loading = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    if workouts.isEmpty {
-                        Text("暂无骑行记录。第一次骑行结束后会出现在这里。")
+                    if loading {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            Text("正在读取苹果健康…")
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                        .padding(.top, 20)
+                    } else if workouts.isEmpty {
+                        Text("暂无骑行记录。若健康里明明有，请到 系统设置 > 隐私与安全 > 健康 > 咕咕骑车 打开读取权限。")
                             .font(.footnote)
                             .foregroundStyle(.gray)
                             .padding(.top, 20)
@@ -115,7 +124,10 @@ struct LogView: View {
     }
 
     private func load() async {
+        loading = true
+        try? await HealthKitStore.shared.requestAuthorization()
         workouts = await HealthKitStore.shared.recentWorkouts()
+        loading = false
     }
 
     /// 全量导出：这条训练在苹果健康里可读的一切
