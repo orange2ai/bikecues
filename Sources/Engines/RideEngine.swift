@@ -26,7 +26,6 @@ final class RideEngine: ObservableObject {
     private var lastKm = 0
     private var lastKmElapsed: TimeInterval = 0
     private var lastZone: HRZone?
-    private var lastIntervalCue: Date?
     private let praise = PraisePicker()
     private var isAutoPaused = false
     private var lowSpeedTicks = 0
@@ -49,7 +48,6 @@ final class RideEngine: ObservableObject {
         startDate = now
         lastKm = 0
         lastZone = nil
-        lastIntervalCue = now
         pausedAccum = 0
         cues.removeAll()
 
@@ -267,15 +265,6 @@ final class RideEngine: ObservableObject {
                     text += " " + line
                 }
                 cue(text, kind: .kmSplit)
-            }
-        }
-
-        // 定时播报
-        if settings.intervalMinutes > 0 {
-            let interval = TimeInterval(settings.intervalMinutes * 60)
-            if let last = lastIntervalCue, Date().timeIntervalSince(last) >= interval {
-                lastIntervalCue = Date()
-                cue("已骑行 \(Int(state.distanceKm)) 公里，用时 \(Int(state.elapsed / 60)) 分钟", kind: .interval)
             }
         }
 

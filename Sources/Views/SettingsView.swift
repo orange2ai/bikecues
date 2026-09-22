@@ -14,7 +14,7 @@ struct SettingsView: View {
                     }
 
                     section("传感器") {
-                        row("Apple Watch 心率", sub: "蓝牙心率广播链路，实时上屏", value: engine.state.heartRateSource == .watchBridge ? "已连接" : "未连接", on: engine.state.heartRateSource == .watchBridge)
+                        row("Apple Watch 心率", sub: "手表上开个体能训练，心率经苹果健康实时上屏", value: engine.state.heartRateSource == .healthKit ? "已连接" : "未连接", on: engine.state.heartRateSource == .healthKit)
                         row("GPS 速度", sub: "iPhone 定位，无需外设", value: "内置", on: true)
                         row("AirPods Pro 3 / 心率带", sub: "标准蓝牙心率源，实时", value: engine.state.heartRateSource == .bluetooth ? "已连接" : "未连接", on: engine.state.heartRateSource == .bluetooth)
                     }

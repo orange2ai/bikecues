@@ -40,7 +40,6 @@ struct CueEvent: Identifiable, Codable {
 /// 播报设置（UserDefaults 持久化）
 struct CueSettings: Codable, Equatable {
     var perKilometer: Bool = true
-    var intervalMinutes: Int = 10      // 0 = 关闭定时播报
     var hrZoneAlert: Bool = true
     var paceAnomaly: Bool = false
     var mixWithAudio: Bool = true      // 混音播放，不暂停音乐
@@ -67,7 +66,6 @@ extension CueSettings {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         perKilometer = try c.decodeIfPresent(Bool.self, forKey: .perKilometer) ?? true
-        intervalMinutes = try c.decodeIfPresent(Int.self, forKey: .intervalMinutes) ?? 10
         hrZoneAlert = try c.decodeIfPresent(Bool.self, forKey: .hrZoneAlert) ?? true
         paceAnomaly = try c.decodeIfPresent(Bool.self, forKey: .paceAnomaly) ?? false
         mixWithAudio = try c.decodeIfPresent(Bool.self, forKey: .mixWithAudio) ?? true
