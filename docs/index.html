@@ -4,56 +4,129 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>咕咕骑车 · Coucou Bike</title>
-<meta name="description" content="骑行时，有一只鸟在你耳机里报数。速度、距离、心率，语音播报，数据写入苹果健康。">
+<meta name="description" content="骑行时，有一只鸟在你耳机里报数。速度、距离、心率，语音播报，数据写入苹果健康。无广告，开源，买断。">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta property="og:title" content="咕咕骑车 · Coucou Bike">
+<meta property="og:description" content="骑行时，有一只鸟在你耳机里报数。">
+<meta property="og:image" content="icon.png">
 <style>
-  :root { --orange: #FF9500; }
+  :root { --orange: #FF9500; --dim: #8a8a8e; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; }
   body {
-    background: #000; color: #fff;
+    background: #000; color: #f5f5f7;
     font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
-    display: flex; flex-direction: column; justify-content: space-between;
-    min-height: 100vh; padding: 48px 40px;
+    -webkit-font-smoothing: antialiased;
   }
-  header h1 {
-    font-size: clamp(56px, 10vw, 96px); font-weight: 800; letter-spacing: 2px;
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---- hero ---- */
+  .hero { padding: 110px 0 90px; text-align: center; }
+  .hero img {
+    width: 128px; height: 128px; border-radius: 29px;
+    box-shadow: 0 0 80px rgba(255,149,0,.28), 0 0 24px rgba(255,149,0,.18);
   }
-  header p.sub {
-    margin-top: 12px; color: var(--orange); font-weight: 600;
-    letter-spacing: 6px; font-size: clamp(14px, 2.4vw, 20px);
+  .hero h1 { font-size: clamp(52px, 11vw, 84px); font-weight: 800; margin-top: 36px; letter-spacing: 2px; }
+  .hero .en { color: var(--orange); font-weight: 600; letter-spacing: 8px; font-size: clamp(13px, 2.6vw, 18px); margin-top: 10px; }
+  .hero .tag { color: var(--dim); font-size: 19px; margin-top: 26px; line-height: 1.7; }
+  .hero .badge {
+    display: inline-block; margin-top: 40px; padding: 12px 26px;
+    border: 1px solid rgba(255,149,0,.5); border-radius: 999px;
+    color: var(--orange); font-size: 15px; letter-spacing: 1px;
   }
-  main p.story {
-    max-width: 560px; line-height: 1.9; color: #bbb; font-size: 17px;
+
+  /* ---- 通用 section ---- */
+  section { padding: 70px 0; border-top: 1px solid rgba(255,255,255,.07); }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 34px; }
+  section h2 span { color: var(--orange); margin-right: 10px; font-size: 20px; }
+
+  /* ---- 播报演示 ---- */
+  .cues { display: flex; flex-direction: column; gap: 14px; }
+  .cue {
+    background: #111; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px; padding: 18px 22px; font-size: 16px; line-height: 1.6;
   }
-  main p.story strong { color: #fff; }
-  main .cue {
-    margin-top: 28px; color: var(--orange); font-size: 15px; letter-spacing: 1px;
+  .cue b { color: var(--orange); font-weight: 700; margin-right: 8px; }
+  .cue .km { float: right; color: #555; font-size: 13px; }
+
+  /* ---- 原则 ---- */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: #111; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px; padding: 24px;
   }
-  footer { display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
-  footer a {
+  .card h3 { font-size: 17px; margin-bottom: 8px; }
+  .card p { color: var(--dim); font-size: 14px; line-height: 1.7; }
+
+  /* ---- 故事 ---- */
+  .story { font-size: 17px; line-height: 2; color: #c7c7cc; }
+  .story strong { color: #fff; }
+  .story .quote {
+    margin-top: 26px; padding-left: 18px; border-left: 3px solid var(--orange);
+    color: var(--orange); font-size: 15px;
+  }
+
+  /* ---- footer ---- */
+  footer { border-top: 1px solid rgba(255,255,255,.07); padding: 44px 0 60px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; }
+  .foot a {
     color: var(--orange); text-decoration: none; font-size: 15px;
-    border: 1px solid rgba(255,149,0,.45); border-radius: 999px; padding: 10px 22px;
+    border: 1px solid rgba(255,149,0,.45); border-radius: 999px; padding: 10px 24px;
   }
-  footer a:hover { background: rgba(255,149,0,.12); }
-  footer span.note { color: #666; font-size: 13px; }
+  .foot a:hover { background: rgba(255,149,0,.12); }
+  .foot span { color: #555; font-size: 13px; }
 </style>
 </head>
 <body>
-  <header>
+
+<div class="wrap">
+  <div class="hero">
+    <img src="icon.png" alt="咕咕骑车 App 图标">
     <h1>咕咕骑车</h1>
-    <p class="sub">COUCOU BIKE</p>
-  </header>
-  <main>
+    <p class="en">COUCOU BIKE</p>
+    <p class="tag">骑行时，有一只鸟在你耳机里报数。<br>速度、距离、心率，说给你听。</p>
+    <span class="badge">App Store 即将上架 · 首发限免</span>
+  </div>
+
+  <section>
+    <h2><span>01</span>它怎么说话</h2>
+    <div class="cues">
+      <div class="cue"><span class="km">第 1 公里</span><b>咕咕！</b>已经骑行 1 公里，最近一公里平均速度 23 公里。</div>
+      <div class="cue"><span class="km">第 2 公里</span><b>咕咕！</b>已经骑行 2 公里，最近一公里平均速度 25 公里，平均心率 142。</div>
+      <div class="cue"><span class="km">爬坡</span><b>咕咕！</b>心率进入五区，当前 178，悠着点。</div>
+      <div class="cue"><span class="km">结束</span><b>咕咕！</b>骑行结束，数据已写入苹果健康。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span>02</span>它的原则</h2>
+    <div class="grid">
+      <div class="card"><h3>无广告，永久</h3><p>不卖货，不打广告，不搞歪门邪道。你买的是软件本身。</p></div>
+      <div class="card"><h3>数据永不丢失</h3><p>本地优先，健康兜底，随时导出 Markdown。你的数据属于你。</p></div>
+      <div class="card"><h3>原生</h3><p>深度打通苹果健康，记录按最兼容的方式写入，不另建孤岛。</p></div>
+      <div class="card"><h3>开源 · 买断</h3><p>代码公开仅限自用；商店版一次付费，永久使用。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span>03</span>为什么叫咕咕</h2>
     <p class="story">
-      布谷鸟是最老的提醒器：黑森林的钟每整点报一次时，在中国它的叫声就是<strong>"播谷"</strong>，
-      提醒农人下地。这个 App 是它的同物种——骑行时，每公里在你耳机里说一句：
-      速度、距离、心率。数据写入苹果健康，无广告，开源，买断。
+      布谷鸟是最老的提醒器：黑森林的钟每整点跳出来报一次时；在中国民间，
+      它的叫声就是<strong>"播谷"</strong>，提醒农人下地；法语里 coucou 既是它的叫声，
+      也是熟人之间那句轻快的<strong>"嗨～"</strong>。
+      每公里跟你说一句话的骑行 App，和它属于同一个物种。
     </p>
-    <p class="cue">"已经骑行 1 公里，最近一公里平均速度 23 公里。"</p>
-  </main>
+    <p class="quote">咕咕！该出发了。</p>
+  </section>
+
   <footer>
-    <a href="https://github.com/orange2ai/coucou-bike">GitHub 开源仓库</a>
-    <span class="note">App Store 上架后，下载链接出现在这里 · 永不出现广告</span>
+    <div class="foot">
+      <a href="https://github.com/orange2ai/coucou-bike">GitHub 开源仓库</a>
+      <span>© 2026 Coucou Bike · 永不出现广告</span>
+    </div>
   </footer>
+</div>
+
 </body>
 </html>
