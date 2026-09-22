@@ -13,7 +13,6 @@ final class RideEngine: ObservableObject {
     @Published var state = RideState()
     @Published var cues: [CueEvent] = []
     @Published var settings: CueSettings = CueSettings.load()
-    @Published var screenDimmed = false
     @Published var healthAuthorized = false
 
     enum Phase { case idle, riding, paused }
@@ -29,8 +28,9 @@ final class RideEngine: ObservableObject {
     private var lastZone: HRZone?
     private var lastIntervalCue: Date?
     private var ticker: Timer?
-    private var idleTimer: Timer?
-    private var lastInteraction = Date()
+    // 本公里心率累计（用于“平均心率”播报）
+    private var hrSegSum: Double = 0
+    private var hrSegCount: Int = 0
 
     private init() {
         recorder.onLocation = { [weak self] loc in
@@ -67,7 +67,6 @@ final class RideEngine: ObservableObject {
 
         phase = .riding
         startTicker()
-        resetIdle()
     }
 
     func pause() {
@@ -76,7 +75,6 @@ final class RideEngine: ObservableObject {
         lastPauseStart = Date()
         recorder.stop()
         cue("已暂停", kind: .lifecycle)
-        resetIdle()
     }
 
     func resume() {
@@ -85,7 +83,6 @@ final class RideEngine: ObservableObject {
         phase = .riding
         recorder.start()
         cue("继续骑行", kind: .lifecycle)
-        resetIdle()
     }
 
     func endRide() {
@@ -97,7 +94,6 @@ final class RideEngine: ObservableObject {
         CueSpeaker.shared.deactivateSession()
         stopTicker()
         phase = .idle
-        screenDimmed = false
         cue("骑行结束，数据已写入苹果健康", kind: .lifecycle)
         // 保留 cues 供结束页展示；新骑行时清空
     }
@@ -120,7 +116,6 @@ final class RideEngine: ObservableObject {
         guard phase == .riding, let start = startDate else { return }
         state.elapsed = Date().timeIntervalSince(start) - pausedAccum
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
-        evaluateDim(now: Date())
 
         // 模拟器演示模式：GPS 不会移动，注入合成数据让播报可测（60 倍速）
         #if targetEnvironment(simulator)
@@ -128,8 +123,8 @@ final class RideEngine: ObservableObject {
             let t = Date().timeIntervalSince(s)
             state.speedKmh = max(4, 23 + sin(t / 7) * 6 + sin(t / 2.3) * 2.5)
             state.distanceKm += state.speedKmh / 3600 * 60
-            state.heartRate = min(172, max(98, (state.heartRate ?? 118) + (Double.random(in: -2...2.4))))
-            state.heartRateSource = .healthKit
+            let hr = min(172, max(98, (state.heartRate ?? 118) + Double.random(in: -2...2.4)))
+            absorbHeartRate(hr, source: .healthKit)
         }
         #endif
 
@@ -169,6 +164,8 @@ final class RideEngine: ObservableObject {
         state.heartRate = bpm
         state.heartRateSource = source
         hk.addHeartRateSample(bpm: bpm, at: Date())
+        hrSegSum += bpm
+        hrSegCount += 1
     }
 
     // MARK: - 触发器
@@ -184,8 +181,11 @@ final class RideEngine: ObservableObject {
                 let split = state.elapsed - lastKmElapsed
                 lastKmElapsed = state.elapsed
                 let splitSpeed = split > 1 ? 3600 / split : state.speedKmh
-                let hrText = state.heartRate.map { "，心率 \(Int($0))" } ?? ""
-                cue("已经骑行 \(km) 公里，最近一公里速度 \(Int(splitSpeed)) 公里\(hrText)", kind: .kmSplit)
+                let avgHR = hrSegCount > 0 ? hrSegSum / Double(hrSegCount) : state.heartRate
+                let hrText = avgHR.map { "，平均心率 \(Int($0))" } ?? ""
+                hrSegSum = 0
+                hrSegCount = 0
+                cue("已经骑行 \(km) 公里，最近一公里平均速度 \(Int(splitSpeed)) 公里\(hrText)", kind: .kmSplit)
             }
         }
 
@@ -215,52 +215,12 @@ final class RideEngine: ObservableObject {
         cues.insert(event, at: 0)
         if cues.count > 100 { cues.removeLast() }
         CueSpeaker.shared.speak(text)
-        if kind != .lifecycle {
-            wakeScreenForCue()
-        }
     }
 
-    // MARK: - 省电（OLED：纯黑即熄灭 + 静置调暗 + 定时自亮）
-
-    func userInteracted() {
-        lastInteraction = Date()
-        if screenDimmed { screenDimmed = false }
-    }
-
-    func resetIdle() {
-        lastInteraction = Date()
-        screenDimmed = false
-    }
-
-    private func wakeScreenForCue() {
-        guard settings.wakeOnCue, phase == .riding else { return }
-        if screenDimmed { screenDimmed = false }
-        let delay = TimeInterval(settings.glowDurationSeconds)
-        Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-            guard let self, self.phase == .riding, self.settings.dimOnIdle else { return }
-            self.screenDimmed = Date().timeIntervalSince(self.lastInteraction) >= TimeInterval(self.settings.dimDelaySeconds)
-        }
-    }
-
-    /// 由界面层每秒调用：判断是否应进入息屏 / 定时自亮
-    func evaluateDim(now: Date) {
-        guard phase == .riding, settings.dimOnIdle else { return }
-        let idle = now.timeIntervalSince(lastInteraction)
-        if screenDimmed {
-            if idle >= TimeInterval(settings.glowIntervalSeconds) {
-                screenDimmed = false // 自亮 glowDuration 后由下次 evaluate 重新调暗
-            }
-        } else if idle >= TimeInterval(settings.dimDelaySeconds) {
-            screenDimmed = true
-        }
-    }
-
-    /// 真实亮度控制由视图层根据 screenDimmed 调 UIScreen.brightness（模拟器上无效但真机有效）
+    // MARK: - 省电策略：OLED 纯黑即熄灭，骑行页始终 100% 黑底，无需暗屏与亮屏机制
 
     func saveSettings() {
         settings.save()
-        CueSpeaker.shared.setVoice(name: settings.voiceName)
     }
 
     func exportLatestRideMarkdown() -> String {

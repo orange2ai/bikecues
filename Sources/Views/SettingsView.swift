@@ -7,29 +7,6 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    section("表盘布局") {
-                        HStack {
-                            layoutCard("三大数据", "速度、距离、心率，一屏全是大字", selected: true)
-                            layoutCard("心率优先", "适合训练日盯区间", selected: false)
-                        }
-                    }
-
-                    section("省电") {
-                        toggleRow("静置调暗", sub: "无操作自动降亮度，点按恢复", $engine.settings.dimOnIdle)
-                        if engine.settings.dimOnIdle {
-                            stepperRow("调暗等待", value: "\(engine.settings.dimDelaySeconds) 秒") {
-                                engine.settings.dimDelaySeconds = max(5, engine.settings.dimDelaySeconds - 5)
-                            } plus: {
-                                engine.settings.dimDelaySeconds = min(30, engine.settings.dimDelaySeconds + 5)
-                            }
-                            stepperRow("定时自亮", value: "\(engine.settings.glowIntervalSeconds) 秒") {
-                                engine.settings.glowIntervalSeconds = max(30, engine.settings.glowIntervalSeconds - 15)
-                            } plus: {
-                                engine.settings.glowIntervalSeconds = min(120, engine.settings.glowIntervalSeconds + 15)
-                            }
-                        }
-                    }
-
                     section("数据") {
                         row("苹果健康", sub: "按系统标准写入与读取，不另建孤岛", value: "始终开启", on: true)
                         row("本地优先", sub: "所有记录先落本机，网络只是锦上添花", value: "架构保证", on: true)
@@ -65,18 +42,6 @@ struct SettingsView: View {
                 .background(Color(white: 0.07))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-    }
-
-    private func layoutCard(_ name: String, _ desc: String, selected: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(name).font(.subheadline).bold()
-            Text(desc).font(.caption2).foregroundStyle(.gray)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(selected ? Color.orange : Color(white: 0.15), lineWidth: selected ? 1.5 : 1))
-        .background(selected ? Color.orange.opacity(0.1) : Color(white: 0.07))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private func toggleRow(_ name: String, sub: String, _ binding: Binding<Bool>) -> some View {

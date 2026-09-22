@@ -44,11 +44,6 @@ struct CueSettings: Codable, Equatable {
     var hrZoneAlert: Bool = true
     var paceAnomaly: Bool = false
     var mixWithAudio: Bool = true      // 混音播放，不暂停音乐
-    var dimOnIdle: Bool = true
-    var dimDelaySeconds: Int = 10
-    var glowIntervalSeconds: Int = 60  // 息屏期间定时自亮周期
-    var glowDurationSeconds: Int = 3
-    var wakeOnCue: Bool = true         // 播报时亮屏
 
     static func load() -> CueSettings {
         guard let data = UserDefaults.standard.data(forKey: "cue.settings"),

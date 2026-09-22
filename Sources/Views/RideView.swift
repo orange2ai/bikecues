@@ -58,13 +58,6 @@ struct RideView: View {
             .padding(.horizontal, 24)
             .padding(.top, 8)
 
-            if engine.screenDimmed {
-                Text("省电模式 · 点按屏幕唤醒")
-                    .font(.caption2)
-                    .tracking(2)
-                    .foregroundStyle(Color(white: 0.3))
-            }
-
             Spacer(minLength: 0)
 
             // 速度
@@ -116,20 +109,8 @@ struct RideView: View {
             )
             .padding(.horizontal, 22)
             .padding(.bottom, 28)
-
-            Text("点按暂停 · 长按结束 · OLED 纯黑即省电")
-                .font(.caption2)
-                .tracking(2)
-                .foregroundStyle(Color(white: 0.3))
-                .padding(.bottom, 14)
         }
         .contentShape(Rectangle())
-        .onTapGesture { engine.userInteracted() }
-        .onReceive(engine.$screenDimmed) { dim in
-            // 真机省电：压低亮度而不是只做视觉调暗
-            UIScreen.main.brightness = dim ? 0.01 : max(UIScreen.main.brightness, 0.35)
-        }
-        .onAppear { engine.resetIdle() }
     }
 
     private func bigMetric(value: String, unit: String) -> some View {
