@@ -2,7 +2,6 @@ import SwiftUI
 
 struct RideView: View {
     @EnvironmentObject var engine: RideEngine
-    @State private var showStartDialog = false
 
     var body: some View {
         Group {
@@ -12,22 +11,6 @@ struct RideView: View {
             }
         }
         .background(.black)
-        .confirmationDialog("记录交给手表，咕咕只管说话",
-                            isPresented: $showStartDialog,
-                            titleVisibility: .visible) {
-            Button("打开体能训练") {
-                if let url = URL(string: "x-apple-fitness://") {
-                    UIApplication.shared.open(url)
-                }
-                engine.startRide()
-            }
-            Button("我已在体能训练里") {
-                engine.startRide()
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("在体能训练里开一次骑行，手表会自动跟着开。心率、里程、路线全部由原生记录，咕咕实时播报。")
-        }
     }
 
     // MARK: - 未开始：名字在上方，两行，足够大
@@ -48,7 +31,7 @@ struct RideView: View {
 
             Spacer()
 
-            Button(action: { showStartDialog = true }) {
+            Button(action: { engine.startRide() }) {
                 Text("GO")
                     .font(.system(size: 46, weight: .heavy))
                     .foregroundStyle(.black)

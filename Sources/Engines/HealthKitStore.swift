@@ -2,8 +2,20 @@ import Foundation
 import CoreLocation
 import HealthKit
 
-/// HealthKit 纯读取：咕咕不写入任何数据，记录交给手表原生体能训练。
-/// 心率、距离实时监听（AnchoredObjectQuery）+ 历史查询（导出用）。
+/// HealthKit 读写：训练写入 + 心率读取（延迟兜底）+ 历史查询
+/// 保证 continuation 只被 resume 一次（HealthKit 回调可能多次到达）
+private final class ResumeOnce {
+    private let lock = NSLock()
+    private var fired = false
+    func run(_ body: () -> Void) {
+        lock.lock()
+        if fired { lock.unlock(); return }
+        fired = true
+        lock.unlock()
+        body()
+    }
+}
+
 final class HealthKitStore {
     static let shared = HealthKitStore()
     private let store = HKHealthStore()
@@ -24,18 +36,83 @@ final class HealthKitStore {
 
     func requestAuthorization() async throws {
         guard isAvailable else { return }
-        // 只读：不申请任何写入权限
+        let toShare: Set<HKSampleType> = [
+            HKObjectType.workoutType(),
+            HKQuantityType(.distanceCycling),
+            HKQuantityType(.heartRate),
+            HKQuantityType(.activeEnergyBurned),
+            HKQuantityType(.cyclingCadence),
+        ]
         let toRead: Set<HKObjectType> = [
             HKQuantityType(.heartRate),
             HKQuantityType(.distanceCycling),
             HKQuantityType(.activeEnergyBurned),
-            HKQuantityType(.cyclingCadence),
             HKObjectType.workoutType(),
+            HKSeriesType.workoutRoute(),
         ]
-        try await store.requestAuthorization(toShare: [], read: toRead)
+        try await store.requestAuthorization(toShare: toShare, read: toRead)
     }
 
-    // MARK: - 历史样本查询（导出用）
+    // MARK: - 训练写入（WorkoutBuilder）
+
+    private var builder: HKWorkoutBuilder?
+    private var routeBuilder: HKWorkoutRouteBuilder?
+
+    func startWorkout(start: Date) {
+        guard isAvailable else { return }
+        let config = HKWorkoutConfiguration()
+        config.activityType = .cycling
+        config.locationType = .outdoor
+        let b = HKWorkoutBuilder(healthStore: store, configuration: config, device: .local())
+        b.beginCollection(withStart: start) { _, _ in }
+        builder = b
+        // 跟 workout 绑定的路线构建器：workout 结束时自动收尾
+        routeBuilder = b.seriesBuilder(for: .workoutRoute()) as? HKWorkoutRouteBuilder
+    }
+
+    func addDistanceSample(meters: Double, at date: Date) {
+        guard let builder else { return }
+        let qty = HKQuantity(unit: .meter(), doubleValue: meters)
+        let sample = HKQuantitySample(type: HKQuantityType(.distanceCycling), quantity: qty, start: date, end: date)
+        builder.add([sample]) { _, _ in }
+    }
+
+    func addHeartRateSample(bpm: Double, at date: Date) {
+        guard let builder else { return }
+        let qty = HKQuantity(unit: HKUnit.count().unitDivided(by: .minute()), doubleValue: bpm)
+        let sample = HKQuantitySample(type: HKQuantityType(.heartRate), quantity: qty, start: date, end: date)
+        builder.add([sample]) { _, _ in }
+    }
+
+    func addEnergySample(kcal: Double, start: Date, end: Date) {
+        guard let builder else { return }
+        let qty = HKQuantity(unit: .kilocalorie(), doubleValue: kcal)
+        let sample = HKQuantitySample(type: HKQuantityType(.activeEnergyBurned), quantity: qty, start: start, end: end)
+        builder.add([sample]) { _, _ in }
+    }
+
+    func endWorkout(end: Date, completion: ((Bool) -> Void)? = nil) {
+        guard let builder else { completion?(false); return }
+        self.builder = nil
+        builder.endCollection(withEnd: end) { _, _ in
+            builder.finishWorkout { _, error in
+                if let error { print("[bikecues] finishWorkout error:", error.localizedDescription) }
+                DispatchQueue.main.async { completion?(error == nil) }
+            }
+        }
+    }
+
+    func discardWorkout() {
+        builder?.discardWorkout()
+        builder = nil
+        routeBuilder = nil
+    }
+
+    /// 轨迹入库：攒一批点写一次，省事务开销
+    func addRouteLocations(_ locations: [CLLocation]) {
+        guard let routeBuilder, isAvailable, !locations.isEmpty else { return }
+        routeBuilder.insertRouteData(locations) { _, _ in }
+    }
 
     /// 某次体能训练期间的平均心率
     func averageHeartRate(for workout: HKWorkout) async -> Double? {
@@ -76,27 +153,35 @@ final class HealthKitStore {
         }
     }
 
-    /// 某次体能训练的距离样本序列（手表写入，累计值；导出算分段用）
-    func distanceSamples(for workout: HKWorkout) async -> [(Date, Double)] {
+    /// 某次体能训练的 GPS 轨迹逐点
+    func routeLocations(for workout: HKWorkout) async -> [CLLocation] {
         guard isAvailable else { return [] }
-        let type = HKQuantityType(.distanceCycling)
-        let predicate = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        let routes: [HKWorkoutRoute] = await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: HKSeriesType.workoutRoute(),
+                                  predicate: HKQuery.predicateForObjects(from: workout),
+                                  limit: 1, sortDescriptors: nil) { _, samples, _ in
+                cont.resume(returning: samples as? [HKWorkoutRoute] ?? [])
+            }
+            store.execute(q)
+        }
+        guard let route = routes.first else { return [] }
         return await withCheckedContinuation { cont in
-            let q = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
-                                  sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: true)]) { _, samples, _ in
-                let out = (samples as? [HKQuantitySample])?.map { ($0.endDate, $0.quantity.doubleValue(for: .meter())) } ?? []
-                cont.resume(returning: out)
+            var acc: [CLLocation] = []
+            let once = ResumeOnce()
+            let q = HKWorkoutRouteQuery(route: route) { _, locations, done, error in
+                acc.append(contentsOf: locations ?? [])
+                if done || error != nil {
+                    once.run { cont.resume(returning: acc) }
+                }
             }
             store.execute(q)
         }
     }
 
-    // MARK: - 实时监听（只读）
+    // MARK: - 心率读取
 
     private var hrObserver: HKQuery?
     private var hrAnchor: HKQueryAnchor?
-    private var distObserver: HKQuery?
-    private var distAnchor: HKQueryAnchor?
 
     /// 实时心率观察：手表上跑着任意体能训练时，心率样本约每 5 秒写入 HealthKit，
     /// iPhone 侧用长驻 AnchoredObjectQuery 即可拿到准实时心率，无需手表 App。
@@ -122,31 +207,6 @@ final class HealthKitStore {
         if let q = hrObserver { store.stop(q) }
         hrObserver = nil
         hrAnchor = nil
-    }
-
-    /// 实时距离观察：手表体能训练期间距离样本持续写入，
-    /// quantity 为累计值（个别来源可能是增量），由调用方兼容处理。
-    func startLiveDistanceObservation(handler: @escaping (Double, Date) -> Void) {
-        guard isAvailable, distObserver == nil else { return }
-        let type = HKQuantityType(.distanceCycling)
-        let q = HKAnchoredObjectQuery(type: type, predicate: nil, anchor: distAnchor, limit: HKObjectQueryNoLimit) { [weak self] _, samples, _, newAnchor, _ in
-            guard let self else { return }
-            self.distAnchor = newAnchor
-            for s in samples ?? [] {
-                if let hs = s as? HKQuantitySample {
-                    let meters = hs.quantity.doubleValue(for: .meter())
-                    DispatchQueue.main.async { handler(meters, hs.endDate) }
-                }
-            }
-        }
-        store.execute(q)
-        distObserver = q
-    }
-
-    func stopLiveDistanceObservation() {
-        if let q = distObserver { store.stop(q) }
-        distObserver = nil
-        distAnchor = nil
     }
 
     /// 查询最近 N 秒内的心率样本（低频兜底）
@@ -177,7 +237,7 @@ final class HealthKitStore {
         }
     }
 
-    // MARK: - 删除（仅限有写入权限的数据；他人写入的记录会失败并提示）
+    // MARK: - 删除
 
     func deleteWorkout(_ w: HKWorkout) async -> Bool {
         guard isAvailable else { return false }

@@ -1,9 +1,9 @@
 import Foundation
 import SwiftUI
+import CoreLocation
 import UIKit
 
-/// 骑行总引擎：纯播报编排。记录全部交给手表原生体能训练，
-/// 咕咕只监听 HealthKit 的心率与距离样本流，负责说话。
+/// 骑行总引擎：编排 GPS、HealthKit、播报、省电
 @MainActor
 final class RideEngine: ObservableObject {
     static let shared = RideEngine()
@@ -18,6 +18,7 @@ final class RideEngine: ObservableObject {
     enum Phase { case idle, riding, paused }
 
     // MARK: - 内部
+    private let recorder = LocationRecorder()
     private let hk = HealthKitStore.shared
     private var startDate: Date?
     private var pausedAccum: TimeInterval = 0
@@ -32,50 +33,48 @@ final class RideEngine: ObservableObject {
     // 本公里心率累计（用于“平均心率”播报）
     private var hrSegSum: Double = 0
     private var hrSegCount: Int = 0
-    // 距离样本流：累计值与增量换算
-    private var lastDistMeters: Double?
-    private var lastDistDate: Date?
-    // 无数据提醒
-    private var remindedNoData = false
+    private var routeBuffer: [CLLocation] = []
 
-    private init() {}
+    private init() {
+        recorder.onLocation = { [weak self] loc in
+            self?.absorb(location: loc)
+        }
+    }
 
     // MARK: - 生命周期
 
     func startRide() {
         guard phase == .idle else { return }
-        startDate = Date()
+        let now = Date()
+        startDate = now
         lastKm = 0
         lastZone = nil
         pausedAccum = 0
-        lastDistMeters = nil
-        lastDistDate = nil
-        remindedNoData = false
         cues.removeAll()
 
+        recorder.start()
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
-        cue("咕咕上线，陪你出发", kind: .lifecycle)
+        cue("已开始记录，咕咕陪你出发", kind: .lifecycle)
+        if settings.hrReminder {
+            cue("想看实时心率，记得在手表上开个体能训练", kind: .lifecycle)
+        }
 
         // 记录中屏幕常亮：OLED 纯黑本身几乎不耗电
         UIApplication.shared.isIdleTimerDisabled = true
         phase = .riding
         startTicker()
 
+        // 关键：先等授权完成，再起 workout 会话，否则会话起在未授权状态下静默失败
         Task { @MainActor in
             try? await hk.requestAuthorization()
             self.healthAuthorized = hk.isAvailable
-            guard self.phase != .idle else { return }
-            self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
+            guard phase != .idle, let s = startDate else { return }
+            hk.startWorkout(start: s)
+            hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
                 Task { @MainActor in
                     // 只接受 90 秒内的新鲜样本，过期样本说明手表没有在记录，退回无心率状态
                     guard let self, Date().timeIntervalSince(endDate) < 90 else { return }
                     self.absorbHeartRate(bpm, source: .healthKit)
-                }
-            }
-            self.hk.startLiveDistanceObservation { [weak self] meters, date in
-                Task { @MainActor in
-                    guard let self else { return }
-                    self.absorbDistance(meters: meters, at: date)
                 }
             }
         }
@@ -86,10 +85,11 @@ final class RideEngine: ObservableObject {
         phase = .paused
         isAutoPaused = false
         lastPauseStart = Date()
+        recorder.stop()
         cue(settings.emotionalValue ? "已暂停。" + PraisePool.pause : "已暂停", kind: .lifecycle)
     }
 
-    /// 低速自动暂停：手表端数据停了说明你停了，咕咕跟着闭嘴
+    /// 低速自动暂停：GPS 保持开启，以便检测重新出发
     private func autoPause() {
         guard phase == .riding else { return }
         phase = .paused
@@ -113,26 +113,50 @@ final class RideEngine: ObservableObject {
         phase = .riding
         isAutoPaused = false
         lowSpeedTicks = 0
+        recorder.start()
         cue("继续骑行", kind: .lifecycle)
     }
 
     func endRide() {
         guard phase != .idle else { return }
+        let end = Date()
+        recorder.stop()
         hk.stopLiveHeartRateObservation()
-        hk.stopLiveDistanceObservation()
+        let start = startDate ?? end.addingTimeInterval(-max(state.elapsed, 1))
         CueSpeaker.shared.deactivateSession()
         stopTicker()
         UIApplication.shared.isIdleTimerDisabled = false
         phase = .idle
 
-        var text = "骑行结束，数据都在苹果健康里"
-        if state.distanceKm > 0 {
-            text = String(format: "骑行结束，这趟 %.1f 公里", state.distanceKm)
+        // 一分钟以内的骑行视为测试，不写入健康
+        if state.elapsed < 60 {
+            hk.discardWorkout()
+            routeBuffer.removeAll()
+            cue("骑了不到一分钟，咕咕当你在测试，没有记录", kind: .lifecycle)
+            return
         }
-        if settings.emotionalValue {
-            text += "。" + PraisePool.finish(distanceKm: state.distanceKm)
+
+        let kcal = 9.8 * max(state.elapsed, 0) / 60
+        if kcal > 0.5 { hk.addEnergySample(kcal: kcal, start: start, end: end) }
+        let buffered = routeBuffer
+        routeBuffer.removeAll()
+        Task { @MainActor in
+            self.hk.addRouteLocations(buffered)
+            self.hk.endWorkout(end: end) { [weak self] ok in
+                Task { @MainActor in
+                    guard let self else { return }
+                    if ok {
+                        var text = "骑行结束，数据已写入苹果健康"
+                        if self.settings.emotionalValue {
+                            text += "。" + PraisePool.finish(distanceKm: self.state.distanceKm)
+                        }
+                        self.cue(text, kind: .lifecycle)
+                    } else {
+                        self.cue("骑行结束，但健康写入未完成，请检查健康授权", kind: .lifecycle)
+                    }
+                }
+            }
         }
-        cue(text, kind: .lifecycle)
         // 保留 cues 供结束页展示；新骑行时清空
     }
 
@@ -155,13 +179,6 @@ final class RideEngine: ObservableObject {
         state.elapsed = Date().timeIntervalSince(start) - pausedAccum
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
 
-        // 开跑 45 秒还没有任何数据，多半是忘了开体能训练
-        if !remindedNoData, state.elapsed > 45,
-           state.distanceKm == 0, state.heartRateSource == .none, settings.hrReminder {
-            remindedNoData = true
-            cue("咕咕还没听到数据，手表上开个体能训练了吗？", kind: .lifecycle)
-        }
-
         // 低速自动暂停：连续 3 秒低于 1 km/h
         if settings.autoPause {
             if state.speedKmh < 1 {
@@ -176,7 +193,7 @@ final class RideEngine: ObservableObject {
             }
         }
 
-        // 模拟器演示模式：没有手表数据流，注入合成数据让播报可测（60 倍速）
+        // 模拟器演示模式：GPS 不会移动，注入合成数据让播报可测（60 倍速）
         #if targetEnvironment(simulator)
         if let s = startDate {
             let t = Date().timeIntervalSince(s)
@@ -201,37 +218,40 @@ final class RideEngine: ObservableObject {
 
     // MARK: - 数据吸收
 
-    /// 距离样本流：兼容累计值与增量两种来源，换算出即时速度与总里程
-    private func absorbDistance(meters: Double, at date: Date) {
-        guard phase != .idle else { return }
-        defer {
-            lastDistMeters = meters
-            lastDistDate = date
+    private func absorb(location: CLLocation) {
+        // 自动暂停状态下继续监听位置，速度起来就自动继续
+        if phase == .paused {
+            if isAutoPaused, location.speed > 3 / 3.6 {
+                autoResume()
+            }
+            return
         }
-        guard let prevMeters = lastDistMeters, let prevDate = lastDistDate else { return }
-        let deltaMeters: Double
-        if meters >= prevMeters {
-            deltaMeters = meters - prevMeters          // 累计值
-        } else {
-            deltaMeters = meters                        // 增量值
+        guard phase == .riding else { return }
+        let kmh = max(0, location.speed * 3.6)
+        state.speedKmh = kmh.isFinite ? kmh : 0
+        if let prev = lastLocation {
+            let d = location.distance(from: prev)
+            if d > 8 || kmh > 1.5 {
+                state.distanceKm += d / 1000
+                hk.addDistanceSample(meters: d, at: location.timestamp)
+            }
         }
-        guard deltaMeters > 0, deltaMeters < 500 else { return } // 过滤倒退与异常跳变
-        let dt = max(date.timeIntervalSince(prevDate), 0.1)
-        let kmh = deltaMeters / dt * 3.6
-        state.distanceKm += deltaMeters / 1000
-        let speed = min(kmh, 80).isFinite ? min(kmh, 80) : 0
-        state.speedKmh = speed
-
-        // 自动暂停状态下数据重新流动，就继续
-        if phase == .paused, isAutoPaused, speed > 3 {
-            autoResume()
+        lastLocation = location
+        state.elevationM = location.altitude
+        routeBuffer.append(location)
+        if routeBuffer.count >= 10 {
+            hk.addRouteLocations(routeBuffer)
+            routeBuffer.removeAll()
         }
     }
 
+    private var lastLocation: CLLocation?
+
     func absorbHeartRate(_ bpm: Double, source: HeartRateSource) {
-        guard phase != .idle else { return }
+        guard phase == .riding else { return }
         state.heartRate = bpm
         state.heartRateSource = source
+        hk.addHeartRateSample(bpm: bpm, at: Date())
         hrSegSum += bpm
         hrSegCount += 1
     }
@@ -291,5 +311,30 @@ final class RideEngine: ObservableObject {
 
     func saveSettings() {
         settings.save()
+    }
+
+    func exportLatestRideMarkdown() -> String {
+        let date = startDate ?? Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        let distStr = String(format: "%.2f", state.distanceKm)
+        let avgStr = String(format: "%.1f", state.averageSpeedKmh)
+        let hrStr = state.heartRate.map { " · 最新 \(Int($0)) bpm" } ?? ""
+        var lines = [
+            "# 骑行 · \(formatter.string(from: date))",
+            "",
+            "- 距离: \(distStr) km",
+            "- 用时: \(Int(state.elapsed / 60)) 分钟",
+            "- 平均速度: \(avgStr) km/h",
+            "- 心率源: \(state.heartRateSource.rawValue)\(hrStr)",
+            "- 播报记录: \(cues.count) 条",
+            "",
+            "> 由 咕咕骑车 Coucou Bike 导出 · 供人阅读，也供 agent 分析",
+        ]
+        for c in cues.reversed() {
+            let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
+            lines.append("- [\(f.string(from: c.date))] \(c.text)")
+        }
+        return lines.joined(separator: "\n")
     }
 }

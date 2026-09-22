@@ -31,12 +31,18 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: 咕咕骑车
-        INFOPLIST_KEY_NSHealthShareUsageDescription: 咕咕骑车读取心率、里程等健康数据，用于实时显示与语音播报。记录由手表原生体能训练完成，数据保留在苹果健康中。
-        INFOPLIST_KEY_NSMotionUsageDescription: 咕咕骑车使用运动与健身数据提升播报的计算精度。
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: 咕咕骑车使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。
+        INFOPLIST_KEY_NSHealthShareUsageDescription: 咕咕骑车读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: 咕咕骑车将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。
+        INFOPLIST_KEY_NSMotionUsageDescription: 咕咕骑车使用运动与健身数据提升骑行速度的计算精度。
+        INFOPLIST_KEY_UIBackgroundModes: location processing
         SUPPORTS_MACCATALYST: NO
     info:
       path: Info.plist
       properties:
+        UIBackgroundModes:
+          - location
+          - processing
         CFBundleDisplayName: 咕咕骑车
         UILaunchScreen:
           UIColorName: LaunchBackground
