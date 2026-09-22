@@ -5,6 +5,8 @@ struct LogView: View {
     @EnvironmentObject var engine: RideEngine
     @State private var workouts: [HKWorkout] = []
     @State private var exportURL: URL?
+    @State private var workoutToDelete: HKWorkout?
+    @State private var deleting = false
 
     var body: some View {
         NavigationStack {
@@ -18,6 +20,13 @@ struct LogView: View {
                     } else {
                         ForEach(workouts, id: \.uuid) { w in
                             workoutCard(w)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        workoutToDelete = w
+                                    } label: {
+                                        Label("删除记录", systemImage: "trash")
+                                    }
+                                }
                         }
                     }
 
@@ -37,6 +46,24 @@ struct LogView: View {
                 .padding(.vertical, 10)
             }
             .navigationTitle("记录")
+            .confirmationDialog("删除这条骑行记录？",
+                                isPresented: Binding(get: { workoutToDelete != nil },
+                                                     set: { if !$0 { workoutToDelete = nil } }),
+                                titleVisibility: .visible) {
+                Button("删除", role: .destructive) {
+                    guard let w = workoutToDelete else { return }
+                    workoutToDelete = nil
+                    deleting = true
+                    Task {
+                        _ = await HealthKitStore.shared.deleteWorkout(w)
+                        workouts = await HealthKitStore.shared.recentWorkouts()
+                        deleting = false
+                    }
+                }
+                Button("取消", role: .cancel) { workoutToDelete = nil }
+            } message: {
+                Text("会同时从苹果健康中删除，无法恢复。")
+            }
             .task {
                 workouts = await HealthKitStore.shared.recentWorkouts()
                 exportURL = prepareExportFile()

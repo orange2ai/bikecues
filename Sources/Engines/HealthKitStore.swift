@@ -143,4 +143,15 @@ final class HealthKitStore {
             store.execute(q)
         }
     }
+
+    // MARK: - 删除
+
+    func deleteWorkout(_ w: HKWorkout) async -> Bool {
+        guard isAvailable else { return false }
+        return await withCheckedContinuation { cont in
+            store.delete([w]) { _, error in
+                cont.resume(returning: error == nil)
+            }
+        }
+    }
 }
