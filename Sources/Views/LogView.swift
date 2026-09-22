@@ -101,7 +101,7 @@ struct LogView: View {
 
     private func prepareExportFile() -> URL? {
         let text = RideEngine.shared.exportLatestRideMarkdown()
-        let url = FileManager.default.temporaryDirectory.appending(path: "咕咕骑行-骑行记录.md")
+        let url = FileManager.default.temporaryDirectory.appending(path: "咕咕骑车-骑行记录.md")
         do {
             try text.write(to: url, atomically: true, encoding: .utf8)
             return url
