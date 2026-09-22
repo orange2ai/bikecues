@@ -69,12 +69,15 @@ final class HealthKitStore {
         builder.add([sample]) { _, _ in }
     }
 
-    func endWorkout(end: Date) {
-        guard let builder else { return }
-        builder.endCollection(withEnd: end) { _, _ in
-            builder.finishWorkout { _, _ in }
-        }
+    func endWorkout(end: Date, completion: ((Bool) -> Void)? = nil) {
+        guard let builder else { completion?(false); return }
         self.builder = nil
+        builder.endCollection(withEnd: end) { _, _ in
+            builder.finishWorkout { _, error in
+                if let error { print("[bikecues] finishWorkout error:", error.localizedDescription) }
+                DispatchQueue.main.async { completion?(error == nil) }
+            }
+        }
     }
 
     // MARK: - 心率读取

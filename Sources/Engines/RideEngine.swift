@@ -42,9 +42,6 @@ final class RideEngine: ObservableObject {
 
     func startRide() {
         guard phase == .idle else { return }
-        Task { try? await hk.requestAuthorization() }
-        recorder.requestPermission()
-
         let now = Date()
         startDate = now
         lastKm = 0
@@ -54,19 +51,28 @@ final class RideEngine: ObservableObject {
         cues.removeAll()
 
         recorder.start()
-        hk.startWorkout(start: now)
-        hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
-            Task { @MainActor in
-                // 只接受 90 秒内的新鲜样本，过期样本说明手表没有在记录，退回无心率状态
-                guard let self, Date().timeIntervalSince(endDate) < 90 else { return }
-                self.absorbHeartRate(bpm, source: .healthKit)
-            }
-        }
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
         cue("已开始记录，骑码陪你出发", kind: .lifecycle)
 
+        // 记录中屏幕常亮：OLED 纯黑本身几乎不耗电
+        UIApplication.shared.isIdleTimerDisabled = true
         phase = .riding
         startTicker()
+
+        // 关键：先等授权完成，再起 workout 会话，否则会话起在未授权状态下静默失败
+        Task { @MainActor in
+            try? await hk.requestAuthorization()
+            self.healthAuthorized = hk.isAvailable
+            guard phase != .idle, let s = startDate else { return }
+            hk.startWorkout(start: s)
+            hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
+                Task { @MainActor in
+                    // 只接受 90 秒内的新鲜样本，过期样本说明手表没有在记录，退回无心率状态
+                    guard let self, Date().timeIntervalSince(endDate) < 90 else { return }
+                    self.absorbHeartRate(bpm, source: .healthKit)
+                }
+            }
+        }
     }
 
     func pause() {
@@ -90,11 +96,21 @@ final class RideEngine: ObservableObject {
         let end = Date()
         recorder.stop()
         hk.stopLiveHeartRateObservation()
-        hk.endWorkout(end: end)
+        // 能量粗估（骑行 ≈ 8 MET），有真实心率源时苹果健康自己会重算
+        let start = startDate ?? end.addingTimeInterval(-max(state.elapsed, 1))
+        let kcal = 9.8 * max(state.elapsed, 0) / 60
+        if kcal > 0.5 { hk.addEnergySample(kcal: kcal, start: start, end: end) }
         CueSpeaker.shared.deactivateSession()
         stopTicker()
+        UIApplication.shared.isIdleTimerDisabled = false
         phase = .idle
-        cue("骑行结束，数据已写入苹果健康", kind: .lifecycle)
+        hk.endWorkout(end: end) { [weak self] ok in
+            Task { @MainActor in
+                guard let self else { return }
+                self.cue(ok ? "骑行结束，数据已写入苹果健康"
+                       : "骑行结束，但健康写入未完成，请检查健康授权", kind: .lifecycle)
+            }
+        }
         // 保留 cues 供结束页展示；新骑行时清空
     }
 

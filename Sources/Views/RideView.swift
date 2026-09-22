@@ -154,12 +154,12 @@ struct MainHoldButton: View {
     let onLongPress: () -> Void
 
     @State private var progress: CGFloat = 0
-    @State private var pressStart: Date?
+    @State private var holdItem: DispatchWorkItem?
     private let holdDuration: Double = 1.2
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 22)
+            RoundedRectangle(cornerRadius: 28)
                 .fill(Color(white: 0.10))
             GeometryReader { geo in
                 Rectangle()
@@ -167,7 +167,7 @@ struct MainHoldButton: View {
                     .frame(width: geo.size.width * progress)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .clipShape(RoundedRectangle(cornerRadius: 28))
             Text(paused ? "继续 · 长按结束" : "暂停 · 长按结束")
                 .font(.system(size: 15, weight: .semibold))
                 .tracking(2)
@@ -179,22 +179,26 @@ struct MainHoldButton: View {
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
-                    guard pressStart == nil else { return }
-                    pressStart = Date()
+                    guard holdItem == nil else { return }
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     withAnimation(.linear(duration: holdDuration)) { progress = 1 }
-                }
-                .onEnded { _ in
-                    let held = pressStart.map { Date().timeIntervalSince($0) } ?? 0
-                    pressStart = nil
-                    withAnimation(.easeOut(duration: 0.25)) { progress = 0 }
-                    if held >= holdDuration - 0.15 {
+                    let item = DispatchWorkItem {
+                        holdItem = nil
+                        progress = 1
                         UINotificationFeedbackGenerator().notificationOccurred(.warning)
                         onLongPress()
-                    } else {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        onTap()
                     }
+                    holdItem = item
+                    DispatchQueue.main.asyncAfter(deadline: .now() + holdDuration, execute: item)
+                }
+                .onEnded { _ in
+                    let fired = (holdItem == nil)
+                    holdItem?.cancel()
+                    holdItem = nil
+                    withAnimation(.easeOut(duration: 0.2)) { progress = 0 }
+                    guard !fired else { return }
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    onTap()
                 }
         )
     }
