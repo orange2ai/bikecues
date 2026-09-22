@@ -28,7 +28,7 @@
 - [x] MVP：iPhone 端 GPS 记录 + AVSpeechSynthesizer 播报 + HealthKit 写入
 - [ ] Apple Watch 伴侣：抬腕即看的码表，蓝牙心率广播链路实时心率
 - [ ] 手表独立记录：HKWorkoutSession，不带手机也能骑
-- [ ] 数据出口：Markdown 导出、iCloud 同步
+- [ ] 数据出口：Markdown 全量导出（供人阅读，也供 agent 分析）
 - [ ] AI 骑行分析（Coucou Pro）
 
 ## License
