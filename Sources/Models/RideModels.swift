@@ -38,7 +38,7 @@ struct CueEvent: Identifiable, Codable {
 }
 
 /// 播报设置（UserDefaults 持久化）
-struct CueSettings: Equatable {
+struct CueSettings: Codable, Equatable {
     var perKilometer: Bool = true
     var intervalMinutes: Int = 10      // 0 = 关闭定时播报
     var hrZoneAlert: Bool = true

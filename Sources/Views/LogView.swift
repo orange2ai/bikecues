@@ -70,7 +70,7 @@ struct LogView: View {
                     .font(.title3).bold().monospacedDigit().foregroundStyle(.orange)
             }
             HStack(spacing: 14) {
-                Text(w.duration, format: .time(pattern: .hourMinuteSecond))
+                Text(durationString(w.duration))
                 if let energy = w.totalEnergyBurned {
                     Text("\(Int(energy.doubleValue(for: .kilocalorie()))) 千卡")
                 }
@@ -82,6 +82,10 @@ struct LogView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(white: 0.07))
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func durationString(_ t: TimeInterval) -> String {
+        String(format: "%d:%02d:%02d", Int(t) / 3600, Int(t) % 3600 / 60, Int(t) % 60)
     }
 
     private func exportMarkdown() {

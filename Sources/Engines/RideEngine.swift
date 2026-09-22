@@ -195,7 +195,7 @@ final class RideEngine: ObservableObject {
 
     // MARK: - 播报
 
-    private func cue(_ text: String, kind: CueKind) {
+    private func cue(_ text: String, kind: CueEvent.CueKind) {
         let event = CueEvent(id: UUID(), date: Date(), text: text, kind: kind)
         cues.insert(event, at: 0)
         if cues.count > 100 { cues.removeLast() }
@@ -252,13 +252,16 @@ final class RideEngine: ObservableObject {
         let date = startDate ?? Date()
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        let distStr = String(format: "%.2f", state.distanceKm)
+        let avgStr = String(format: "%.1f", state.averageSpeedKmh)
+        let hrStr = state.heartRate.map { " · 最新 \(Int($0)) bpm" } ?? ""
         var lines = [
             "# 骑行 · \(formatter.string(from: date))",
             "",
-            "- 距离: \(String(format: \"%.2f\", state.distanceKm)) km",
+            "- 距离: \(distStr) km",
             "- 用时: \(Int(state.elapsed / 60)) 分钟",
-            "- 平均速度: \(String(format: \"%.1f\", state.averageSpeedKmh)) km/h",
-            "- 心率源: \(state.heartRateSource.rawValue)\(state.heartRate.map { \" · 最新 \(Int($0)) bpm\" } ?? \"\")",
+            "- 平均速度: \(avgStr) km/h",
+            "- 心率源: \(state.heartRateSource.rawValue)\(hrStr)",
             "- 播报记录: \(cues.count) 条",
             "",
             "> 由 骑码 bikecues 导出 · 供人阅读，也供 agent 分析",
