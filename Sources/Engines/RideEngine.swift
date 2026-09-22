@@ -54,6 +54,13 @@ final class RideEngine: ObservableObject {
 
         recorder.start()
         hk.startWorkout(start: now)
+        hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
+            Task { @MainActor in
+                // 只接受 90 秒内的新鲜样本，过期样本说明手表没有在记录，退回无心率状态
+                guard let self, Date().timeIntervalSince(endDate) < 90 else { return }
+                self.absorbHeartRate(bpm, source: .healthKit)
+            }
+        }
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
         cue("已开始记录，骑码陪你出发", kind: .lifecycle)
 
@@ -84,6 +91,7 @@ final class RideEngine: ObservableObject {
         guard phase != .idle else { return }
         let end = Date()
         recorder.stop()
+        hk.stopLiveHeartRateObservation()
         hk.endWorkout(end: end)
         CueSpeaker.shared.deactivateSession()
         stopTicker()
@@ -113,10 +121,10 @@ final class RideEngine: ObservableObject {
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
         evaluateDim(now: Date())
 
-        // 心率兜底源：定时从 HealthKit 捞最新心率（延迟源）
-        if state.heartRateSource == .none || state.heartRateSource == .healthKit {
+        // 心率兜底源：定时从 HealthKit 捞最新心率（仅在实时观察未生效时使用）
+        if state.heartRateSource == .none {
             Task { [weak self] in
-                let hr = await HealthKitStore.shared.latestHeartRate()
+                let hr = await HealthKitStore.shared.latestHeartRate(within: 90)
                 guard let self, let hr else { return }
                 self.absorbHeartRate(hr, source: .healthKit)
             }

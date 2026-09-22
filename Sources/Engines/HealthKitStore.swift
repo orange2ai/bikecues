@@ -72,9 +72,45 @@ final class HealthKitStore {
         self.builder = nil
     }
 
-    // MARK: - 心率读取（延迟兜底源）
+    // MARK: - 心率读取
 
-    /// 查询最近 N 秒内的心率样本（HealthKit 心率有延迟，用于每公里播报等低频场景）
+    private var hrObserver: HKObserverQuery?
+    private var hrAnchor: HKQueryAnchor?
+
+    /// 实时心率观察：手表上跑着任意体能训练时，心率样本约每 5 秒写入 HealthKit，
+    /// iPhone 侧用 Observer + Anchored 查询即可拿到准实时心率，无需手表 App。
+    func startLiveHeartRateObservation(handler: @escaping (Double, Date) -> Void) {
+        guard isAvailable, hrObserver == nil else { return }
+        let type = HKQuantityType(.heartRate)
+        let unit = HKUnit.count().unitDivided(by: .minute())
+        let q = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, completion in
+            guard let self else { completion(); return }
+            self.hrAnchor = HKAnchoredObjectQuery(type: type, predicate: nil, anchor: self.hrAnchor, limit: HKObjectQueryNoLimit) { _, samples, _, newAnchor, _ in
+                self.hrAnchor = newAnchor
+                for s in samples ?? [] {
+                    if let hs = s as? HKQuantitySample {
+                        let bpm = hs.quantity.doubleValue(for: unit)
+                        DispatchQueue.main.async { handler(bpm, hs.endDate) }
+                    }
+                }
+                completion()
+            }
+            if let anchored = self.hrAnchor { self.store.execute(anchored) }
+        }
+        store.execute(q)
+        hrObserver = q
+    }
+
+    private var hrAnchor: HKQueryAnchor?
+
+    func stopLiveHeartRateObservation() {
+        if let q = hrObserver { store.stop(q) }
+        hrObserver = nil
+        hrAnchor = nil
+        hrAnchorID = nil
+    }
+
+    /// 查询最近 N 秒内的心率样本（低频兜底）
     func latestHeartRate(within seconds: TimeInterval = 30) async -> Double? {
         guard isAvailable else { return nil }
         let type = HKQuantityType(.heartRate)
