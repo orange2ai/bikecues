@@ -50,6 +50,7 @@ final class RideEngine: ObservableObject {
             try? await hk.requestAuthorization()
             self.healthAuthorized = self.hk.isAvailable
             self.hrAuthDenied = self.hk.heartRateAuthDenied()
+            print("[coucou][hr] auth done, available=\(self.hk.isAvailable), denied=\(self.hrAuthDenied)")
             guard self.hk.isAvailable, !self.hrAuthDenied else { return }
             self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
                 Task { @MainActor in
@@ -78,9 +79,13 @@ final class RideEngine: ObservableObject {
                    self.lastHRPoll == nil || Date().timeIntervalSince(self.lastHRPoll!) > 5 {
                     self.lastHRPoll = Date()
                     Task { [weak self] in
-                        guard let (date, hr) = await HealthKitStore.shared.latestHeartRate(within: 12) else { return }
-                        guard let self else { return }
-                        self.absorbHeartRate(hr, source: .healthKit, at: date)
+                        if let (date, hr) = await HealthKitStore.shared.latestHeartRate(within: 12) {
+                            print("[coucou][hr] poll hit: bpm=\(Int(hr)), age=\(Int(Date().timeIntervalSince(date)))s")
+                            guard let self else { return }
+                            self.absorbHeartRate(hr, source: .healthKit, at: date)
+                        } else {
+                            print("[coucou][hr] poll miss: no sample within 12s")
+                        }
                     }
                 }
             }
