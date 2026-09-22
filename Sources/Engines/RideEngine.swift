@@ -125,8 +125,8 @@ final class RideEngine: ObservableObject {
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
         cue("已开始记录，咕咕陪你出发", kind: .lifecycle)
 
-        // 记录中屏幕常亮：OLED 纯黑本身几乎不耗电
-        UIApplication.shared.isIdleTimerDisabled = true
+        // 屏幕常亮：默认开，可在设置里关（关了也能后台记录与播报）
+        UIApplication.shared.isIdleTimerDisabled = settings.keepScreenOn
         phase = .riding
         startTicker()
 

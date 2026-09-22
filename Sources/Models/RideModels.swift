@@ -46,6 +46,7 @@ struct CueSettings: Codable, Equatable {
     var emotionalValue: Bool = true    // 情绪价值：歪嘴夸夸
     var autoPause: Bool = true         // 低速自动暂停/继续
     var hrReminder: Bool = true        // GO 时提醒开手表体能训练
+    var keepScreenOn: Bool = true      // 骑行中屏幕常亮（可手动关闭）
 
     static func load() -> CueSettings {
         guard let data = UserDefaults.standard.data(forKey: "cue.settings"),
@@ -73,6 +74,7 @@ extension CueSettings {
         emotionalValue = try c.decodeIfPresent(Bool.self, forKey: .emotionalValue) ?? true
         autoPause = try c.decodeIfPresent(Bool.self, forKey: .autoPause) ?? true
         hrReminder = try c.decodeIfPresent(Bool.self, forKey: .hrReminder) ?? true
+        keepScreenOn = try c.decodeIfPresent(Bool.self, forKey: .keepScreenOn) ?? true
     }
 }
 

@@ -14,6 +14,11 @@ struct SettingsView: View {
                         row("iCloud 同步", sub: "换手机不丢历史，多端一致", value: "规划中", on: false)
                     }
 
+                    section("骑行") {
+                        toggleRow("屏幕常亮", sub: "骑行中不熄屏；关掉也能后台记录与播报", $engine.settings.keepScreenOn)
+                        toggleRow("自动暂停", sub: "速度低于 1 km/h 自动暂停，动起来自动继续", $engine.settings.autoPause)
+                    }
+
                     section("传感器") {
                         row("Apple Watch 心率", sub: "手表上开个体能训练，心率经苹果健康实时上屏", value: engine.state.heartRateSource == .healthKit ? "已连接" : "未连接", on: engine.state.heartRateSource == .healthKit)
                             .onTapGesture { showHRHint = true }
@@ -79,6 +84,22 @@ struct SettingsView: View {
             Button("+", action: plus).frame(width: 30, height: 30)
         }
         .padding(14)
+    }
+
+    private func toggleRow(_ name: String, sub: String, _ binding: Binding<Bool>) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(name)
+                Text(sub)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Toggle("", isOn: binding)
+                .labelsHidden()
+                .tint(.orange)
+        }
+        .onChange(of: binding.wrappedValue) { _, _ in engine.saveSettings() }
     }
 
     private func row(_ name: String, sub: String, value: String, on: Bool) -> some View {
