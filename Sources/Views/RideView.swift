@@ -35,6 +35,28 @@ struct RideView: View {
 
             Spacer()
 
+            // 心率状态：已连接展示实时数值，未连接给出行动指引（居中）
+            VStack(spacing: 6) {
+                if engine.state.heartRateSource == .healthKit, let hr = engine.state.heartRate {
+                    Text("\(Int(hr))")
+                        .font(.system(size: 44, weight: .light))
+                        .monospacedDigit()
+                        .foregroundStyle(.orange)
+                        .contentTransition(.numericText())
+                    Text("BPM · 实时心率")
+                        .font(.caption2)
+                        .tracking(2)
+                        .foregroundStyle(Color(white: 0.45))
+                } else {
+                    Text("请打开 Apple Watch 的体能训练以记录心率")
+                        .font(.footnote)
+                        .foregroundStyle(Color(white: 0.55))
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 36)
+
             Button(action: {
                 if engine.state.heartRateSource == .healthKit {
                     engine.startRide()
