@@ -1,0 +1,134 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @EnvironmentObject var engine: RideEngine
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    section("表盘布局") {
+                        HStack {
+                            layoutCard("三大数据", "速度、距离、心率，一屏全是大字", selected: true)
+                            layoutCard("心率优先", "适合训练日盯区间", selected: false)
+                        }
+                    }
+
+                    section("省电") {
+                        toggleRow("静置调暗", sub: "无操作自动降亮度，点按恢复", $engine.settings.dimOnIdle)
+                        if engine.settings.dimOnIdle {
+                            stepperRow("调暗等待", value: "\(engine.settings.dimDelaySeconds) 秒") {
+                                engine.settings.dimDelaySeconds = max(5, engine.settings.dimDelaySeconds - 5)
+                            } plus: {
+                                engine.settings.dimDelaySeconds = min(30, engine.settings.dimDelaySeconds + 5)
+                            }
+                            stepperRow("定时自亮", value: "\(engine.settings.glowIntervalSeconds) 秒") {
+                                engine.settings.glowIntervalSeconds = max(30, engine.settings.glowIntervalSeconds - 15)
+                            } plus: {
+                                engine.settings.glowIntervalSeconds = min(120, engine.settings.glowIntervalSeconds + 15)
+                            }
+                        }
+                    }
+
+                    section("数据") {
+                        row("苹果健康", sub: "按系统标准写入与读取，不另建孤岛", value: "始终开启", on: true)
+                        row("本地优先", sub: "所有记录先落本机，网络只是锦上添花", value: "架构保证", on: true)
+                        row("iCloud 同步", sub: "换手机不丢历史，多端一致", value: "规划中", on: false)
+                    }
+
+                    section("传感器") {
+                        row("Apple Watch 心率", sub: "蓝牙心率广播链路，实时上屏", value: engine.state.heartRateSource == .watchBridge ? "已连接" : "未连接", on: engine.state.heartRateSource == .watchBridge)
+                        row("GPS 速度", sub: "iPhone 定位，无需外设", value: "内置", on: true)
+                        row("AirPods Pro 3 / 心率带", sub: "标准蓝牙心率源，实时", value: engine.state.heartRateSource == .bluetooth ? "已连接" : "未连接", on: engine.state.heartRateSource == .bluetooth)
+                    }
+
+                    section("骑码的原则") {
+                        principle("01", "省电", "骑行是长时间运动。OLED 纯黑即熄灭，静置调暗，播报与定时自亮，每颗像素都算着用。")
+                        principle("02", "原生", "和苹果系统深度打通，记录按最兼容的方式写入苹果健康，也读取系统记录。不导流，不另建孤岛。")
+                        principle("03", "数据永不丢失", "本地优先，健康兜底，iCloud 同步，Markdown 导出。你的数据属于你，也随时可以离开。")
+                        principle("04", "无广告，永久", "不卖货，不打广告，不搞歪门邪道。你买的是软件本身。")
+                        principle("05", "开源，仅限自用", "代码公开，欢迎学习和自建。仅限非商业用途，与商店版本互不冲突。")
+                        principle("06", "买断制", "一次付费，永久使用。9 美金，不行就 6 美金，一杯咖啡的交情。")
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+            }
+            .navigationTitle("设置")
+        }
+    }
+
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.headline)
+            VStack(spacing: 0) { content() }
+                .background(Color(white: 0.07))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+    }
+
+    private func layoutCard(_ name: String, _ desc: String, selected: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(name).font(.subheadline).bold()
+            Text(desc).font(.caption2).foregroundStyle(.gray)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(selected ? Color.orange : Color(white: 0.15), lineWidth: selected ? 1.5 : 1))
+        .background(selected ? Color.orange.opacity(0.1) : Color(white: 0.07))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func toggleRow(_ name: String, sub: String, _ binding: Binding<Bool>) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(.body)
+                Text(sub).font(.caption).foregroundStyle(.gray)
+            }
+            Spacer()
+            Toggle("", isOn: binding).labelsHidden().tint(.orange)
+        }
+        .padding(14)
+        .onChange(of: binding.wrappedValue) { _, _ in engine.saveSettings() }
+    }
+
+    private func stepperRow(_ name: String, value: String, minus: @escaping () -> Void, plus: @escaping () -> Void) -> some View {
+        HStack {
+            Text(name).font(.body)
+            Spacer()
+            Button("−", action: minus).frame(width: 30, height: 30)
+            Text(value).font(.body).monospacedDigit().frame(minWidth: 52)
+            Button("+", action: plus).frame(width: 30, height: 30)
+        }
+        .padding(14)
+    }
+
+    private func row(_ name: String, sub: String, value: String, on: Bool) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(.body)
+                Text(sub).font(.caption).foregroundStyle(.gray)
+            }
+            Spacer()
+            Text(value)
+                .font(.caption)
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(on ? Color.orange.opacity(0.12) : Color(white: 0.12))
+                .foregroundStyle(on ? Color.orange : Color.gray)
+                .clipShape(Capsule())
+        }
+        .padding(14)
+    }
+
+    private func principle(_ no: String, _ t: String, _ d: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 14) {
+            Text(no).font(.caption).monospacedDigit().foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(t).font(.subheadline).bold()
+                Text(d).font(.caption).foregroundStyle(.gray).lineSpacing(3)
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
