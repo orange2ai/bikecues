@@ -86,22 +86,6 @@ struct SettingsView: View {
         .padding(14)
     }
 
-    private func toggleRow(_ name: String, sub: String, _ binding: Binding<Bool>) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(name)
-                Text(sub)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Toggle("", isOn: binding)
-                .labelsHidden()
-                .tint(.orange)
-        }
-        .onChange(of: binding.wrappedValue) { _, _ in engine.saveSettings() }
-    }
-
     private func row(_ name: String, sub: String, value: String, on: Bool) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
