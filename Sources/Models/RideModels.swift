@@ -45,6 +45,7 @@ struct CueSettings: Codable, Equatable {
     var mixWithAudio: Bool = true      // 混音播放，不暂停音乐
     var emotionalValue: Bool = true    // 情绪价值：歪嘴夸夸
     var autoPause: Bool = true         // 低速自动暂停/继续
+    var hrReminder: Bool = true        // GO 时提醒开手表体能训练
 
     static func load() -> CueSettings {
         guard let data = UserDefaults.standard.data(forKey: "cue.settings"),
@@ -71,6 +72,7 @@ extension CueSettings {
         mixWithAudio = try c.decodeIfPresent(Bool.self, forKey: .mixWithAudio) ?? true
         emotionalValue = try c.decodeIfPresent(Bool.self, forKey: .emotionalValue) ?? true
         autoPause = try c.decodeIfPresent(Bool.self, forKey: .autoPause) ?? true
+        hrReminder = try c.decodeIfPresent(Bool.self, forKey: .hrReminder) ?? true
     }
 }
 

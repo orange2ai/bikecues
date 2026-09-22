@@ -90,6 +90,21 @@ final class HealthKitStore {
         builder = nil
     }
 
+    /// 某次体能训练期间的平均心率（导出用）
+    func averageHeartRate(for workout: HKWorkout) async -> Double? {
+        guard isAvailable else { return nil }
+        let type = HKQuantityType(.heartRate)
+        let predicate = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        return await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+                let unit = HKUnit.count().unitDivided(by: .minute())
+                let hrs = (samples as? [HKQuantitySample])?.map { $0.quantity.doubleValue(for: unit) } ?? []
+                cont.resume(returning: hrs.isEmpty ? nil : hrs.reduce(0, +) / Double(hrs.count))
+            }
+            store.execute(q)
+        }
+    }
+
     // MARK: - 心率读取
 
     private var hrObserver: HKQuery?

@@ -54,6 +54,9 @@ final class RideEngine: ObservableObject {
         recorder.start()
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
         cue("已开始记录，咕咕陪你出发", kind: .lifecycle)
+        if settings.hrReminder {
+            cue("想看实时心率，记得在手表上开个体能训练", kind: .lifecycle)
+        }
 
         // 记录中屏幕常亮：OLED 纯黑本身几乎不耗电
         UIApplication.shared.isIdleTimerDisabled = true
