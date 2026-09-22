@@ -37,6 +37,7 @@ final class RideEngine: ObservableObject {
     private var routeBuffer: [CLLocation] = []
     // 最后一次收到心率样本的时间：过期回落“未连接”
     private var lastHRDate: Date?
+    private var hrNudgeShown = false
     private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
 
@@ -244,6 +245,16 @@ final class RideEngine: ObservableObject {
             absorbHeartRate(hr, source: .healthKit)
         }
         #endif
+
+        // 骑行 30 秒仍无心率：主动说一次，别让用户对着“—”发呆
+        if !hrNudgeShown, state.elapsed > 30, state.heartRateSource == .none {
+            hrNudgeShown = true
+            if hrAuthDenied {
+                cue("健康读取权限没开，心率进不来。去系统设置，隐私与安全，健康里打开咕咕骑车", kind: .lifecycle)
+            } else {
+                cue("咕咕还没听到心率，确认手表体能训练已经在跑", kind: .lifecycle)
+            }
+        }
 
         // 心率兜底源：定时从 HealthKit 捞最新心率（仅在实时观察未生效时使用）
         if state.heartRateSource == .none {

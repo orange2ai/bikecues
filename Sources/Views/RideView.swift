@@ -66,7 +66,9 @@ struct RideView: View {
                 }
                 Button("取消", role: .cancel) {}
             } message: {
-                Text("在手表上打开体能训练，心率会自动连上并实时播报。也可以不记心率直接骑。")
+                Text(engine.hrAuthDenied
+                     ? "健康读取权限没开：系统设置 > 隐私与安全 > 健康 > 咕咕骑车。"
+                     : "在手表上打开体能训练，心率会自动连上并实时播报。也可以不记心率直接骑。")
             }
             .alert("没打开成功，请手动打开健身 App，选“户外骑行”。", isPresented: $deepLinkFailed) {
                 Button("好", role: .cancel) {}
