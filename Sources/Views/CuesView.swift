@@ -10,6 +10,7 @@ struct CuesView: View {
                     toggleRow("每公里播报", sub: "距离、用时、当前速度、平均速度", $engine.settings.perKilometer)
                     stepperRow("定时播报", sub: "听播客时的低频报数", value: engine.settings.intervalMinutes == 0 ? "关" : "\(engine.settings.intervalMinutes) 分钟", binding: $engine.settings.intervalMinutes)
                     toggleRow("心率区间提醒", sub: "进出区间时播报当前心率", $engine.settings.hrZoneAlert)
+                    toggleRow("情绪价值", sub: "夸夸你，多邻国那种劲儿", $engine.settings.emotionalValue)
                     toggleRow("配速异常提醒", sub: "速度突然掉崖时提醒你（爆胎那种）", $engine.settings.paceAnomaly)
                 }
                 Section("音频") {

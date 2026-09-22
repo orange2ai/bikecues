@@ -27,6 +27,7 @@ final class RideEngine: ObservableObject {
     private var lastKmElapsed: TimeInterval = 0
     private var lastZone: HRZone?
     private var lastIntervalCue: Date?
+    private let praise = PraisePicker()
     private var ticker: Timer?
     // 本公里心率累计（用于“平均心率”播报）
     private var hrSegSum: Double = 0
@@ -80,7 +81,7 @@ final class RideEngine: ObservableObject {
         phase = .paused
         lastPauseStart = Date()
         recorder.stop()
-        cue("已暂停", kind: .lifecycle)
+        cue(settings.emotionalValue ? "已暂停。" + PraisePool.pause : "已暂停", kind: .lifecycle)
     }
 
     func resume() {
@@ -107,8 +108,15 @@ final class RideEngine: ObservableObject {
         hk.endWorkout(end: end) { [weak self] ok in
             Task { @MainActor in
                 guard let self else { return }
-                self.cue(ok ? "骑行结束，数据已写入苹果健康"
-                       : "骑行结束，但健康写入未完成，请检查健康授权", kind: .lifecycle)
+                if ok {
+                    var text = "骑行结束，数据已写入苹果健康"
+                    if self.settings.emotionalValue {
+                        text += "。" + PraisePool.finish(distanceKm: self.state.distanceKm)
+                    }
+                    self.cue(text, kind: .lifecycle)
+                } else {
+                    self.cue("骑行结束，但健康写入未完成，请检查健康授权", kind: .lifecycle)
+                }
             }
         }
         // 保留 cues 供结束页展示；新骑行时清空
@@ -201,7 +209,13 @@ final class RideEngine: ObservableObject {
                 let hrText = avgHR.map { "，平均心率 \(Int($0))" } ?? ""
                 hrSegSum = 0
                 hrSegCount = 0
-                cue("已经骑行 \(km) 公里，最近一公里平均速度 \(Int(splitSpeed)) 公里\(hrText)", kind: .kmSplit)
+                var text = "已经骑行 \(km) 公里，最近一公里平均速度 \(Int(splitSpeed)) 公里\(hrText)"
+                // 情绪价值：报完正事，三成概率补一句歪嘴夸夸
+                if settings.emotionalValue, Bool.random() < 0.35,
+                   let line = praise.pick(from: PraisePool.perKilometer) {
+                    text += " " + line
+                }
+                cue(text, kind: .kmSplit)
             }
         }
 
@@ -218,7 +232,12 @@ final class RideEngine: ObservableObject {
         if settings.hrZoneAlert, let hr = state.heartRate {
             let z = HRZone(heartRate: hr)
             if let last = lastZone, z != last {
-                cue("心率进入\(z.name)，当前 \(Int(hr))", kind: .hrZone)
+                var text = "心率进入\(z.name)，当前 \(Int(hr))"
+                if settings.emotionalValue, z.rawValue > last.rawValue,
+                   let line = praise.pick(from: PraisePool.highHeartRate) {
+                    text += " " + line
+                }
+                cue(text, kind: .hrZone)
             }
             lastZone = z
         }

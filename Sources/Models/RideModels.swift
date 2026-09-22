@@ -44,6 +44,7 @@ struct CueSettings: Codable, Equatable {
     var hrZoneAlert: Bool = true
     var paceAnomaly: Bool = false
     var mixWithAudio: Bool = true      // 混音播放，不暂停音乐
+    var emotionalValue: Bool = true    // 情绪价值：多邻国式夸夸
 
     static func load() -> CueSettings {
         guard let data = UserDefaults.standard.data(forKey: "cue.settings"),
@@ -57,6 +58,19 @@ struct CueSettings: Codable, Equatable {
         if let data = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(data, forKey: "cue.settings")
         }
+    }
+}
+
+extension CueSettings {
+    // 自定义解码：新增字段在旧存档中不存在时用默认值，避免整体解码失败
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        perKilometer = try c.decodeIfPresent(Bool.self, forKey: .perKilometer) ?? true
+        intervalMinutes = try c.decodeIfPresent(Int.self, forKey: .intervalMinutes) ?? 10
+        hrZoneAlert = try c.decodeIfPresent(Bool.self, forKey: .hrZoneAlert) ?? true
+        paceAnomaly = try c.decodeIfPresent(Bool.self, forKey: .paceAnomaly) ?? false
+        mixWithAudio = try c.decodeIfPresent(Bool.self, forKey: .mixWithAudio) ?? true
+        emotionalValue = try c.decodeIfPresent(Bool.self, forKey: .emotionalValue) ?? true
     }
 }
 
