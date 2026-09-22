@@ -13,28 +13,36 @@ struct RideView: View {
         .background(.black)
     }
 
-    // MARK: - 未开始
+    // MARK: - 未开始：名字在上方，两行，足够大
     private var idleView: some View {
-        ZStack {
-            VStack(spacing: 18) {
-                Text("骑 码")
-                    .font(.system(size: 15, weight: .medium))
-                    .tracking(6)
-                    .foregroundStyle(.gray)
-                Button(action: { engine.startRide() }) {
-                    Text("GO")
-                        .font(.system(size: 44, weight: .heavy))
-                        .foregroundStyle(.black)
-                        .frame(width: 168, height: 168)
-                        .background(Circle().fill(Color.orange))
-                        .shadow(color: .orange.opacity(0.25), radius: 30)
-                }
-                Text("记录与播报 · 数据存入苹果健康 · 永不丢失")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("骑码")
+                    .font(.system(size: 84, weight: .bold))
+                    .tracking(2)
+                Text("BIKECUES")
+                    .font(.system(size: 20, weight: .semibold))
+                    .tracking(8)
+                    .foregroundStyle(Color.orange)
             }
+            .padding(.horizontal, 30)
+            .padding(.top, 30)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer()
+
+            Button(action: { engine.startRide() }) {
+                Text("GO")
+                    .font(.system(size: 46, weight: .heavy))
+                    .foregroundStyle(.black)
+                    .frame(width: 172, height: 172)
+                    .background(Circle().fill(Color.orange))
+                    .shadow(color: .orange.opacity(0.25), radius: 30)
+            }
+            .frame(maxWidth: .infinity)
+
+            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - 骑行中（沉浸：无页签，纯黑 OLED）
@@ -146,7 +154,8 @@ struct MainHoldButton: View {
     let onLongPress: () -> Void
 
     @State private var progress: CGFloat = 0
-    @State private var holding = false
+    @State private var pressStart: Date?
+    private let holdDuration: Double = 1.2
 
     var body: some View {
         ZStack {
@@ -163,29 +172,36 @@ struct MainHoldButton: View {
             RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(Color(white: 0.24), lineWidth: 1.5)
         )
+        .overlay(alignment: .bottom) {
+            GeometryReader { geo in
+                Rectangle()
+                    .fill(Color.orange)
+                    .frame(width: geo.size.width * progress, height: 3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(height: 3)
+        }
         .contentShape(RoundedRectangle(cornerRadius: 20))
         .gesture(
-            LongPressGesture(minimumDuration: 1.2)
-                .sequenced(before: DragGesture(minimumDistance: 0))
-                .onChanged { state in
-                    switch state {
-                    case .first(true):
-                        holding = true
-                        withAnimation(.linear(duration: 1.2)) { progress = 1 }
-                    default: break
-                    }
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard pressStart == nil else { return }
+                    pressStart = Date()
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation(.linear(duration: holdDuration)) { progress = 1 }
                 }
                 .onEnded { _ in
-                    holding = false
-                    progress = 0
-                    onLongPress()
+                    let held = pressStart.map { Date().timeIntervalSince($0) } ?? 0
+                    pressStart = nil
+                    withAnimation(.easeOut(duration: 0.25)) { progress = 0 }
+                    if held >= holdDuration - 0.15 {
+                        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                        onLongPress()
+                    } else {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onTap()
+                    }
                 }
-        )
-        .simultaneousGesture(
-            TapGesture().onEnded {
-                guard !holding else { return }
-                onTap()
-            }
         )
     }
 }

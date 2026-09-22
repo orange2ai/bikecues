@@ -18,6 +18,7 @@ targets:
     platform: iOS
     sources:
       - Sources
+      - Assets.xcassets
     entitlements:
       path: bikecues.entitlements
       properties:
@@ -25,6 +26,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.marswave.bikecues
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark

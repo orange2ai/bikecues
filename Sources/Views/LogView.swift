@@ -4,20 +4,12 @@ import HealthKit
 struct LogView: View {
     @EnvironmentObject var engine: RideEngine
     @State private var workouts: [HKWorkout] = []
-    @State private var mdPreview = false
+    @State private var exportURL: URL?
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    HStack(spacing: 8) {
-                        Circle().fill(Color.orange).frame(width: 7, height: 7)
-                        Text("与苹果健康双向同步 · 数据永不丢失")
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
-                    }
-                    .padding(.horizontal, 4)
-
                     if workouts.isEmpty {
                         Text("暂无骑行记录。第一次骑行结束后会出现在这里。")
                             .font(.footnote)
@@ -29,34 +21,26 @@ struct LogView: View {
                         }
                     }
 
-                    Text("数据出口").font(.headline).padding(.top, 10)
-                    Text("你的数据可以随时离开骑码，一个字都不会少")
-                        .font(.caption)
-                        .foregroundStyle(.gray)
-                    Button {
-                        exportMarkdown()
-                    } label: {
-                        Text("导出为 Markdown")
-                            .font(.callout)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.orange, lineWidth: 1.5))
-                            .foregroundStyle(.orange)
-                    }
-                    if mdPreview {
-                        Text(sampleMarkdown)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.gray)
-                            .padding(12)
-                            .background(Color(white: 0.06))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    Text("导出").font(.headline).padding(.top, 10)
+                    if let url = exportURL {
+                        ShareLink(item: url) {
+                            Text("导出为 Markdown")
+                                .font(.callout)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.orange, lineWidth: 1.5))
+                                .foregroundStyle(.orange)
+                        }
                     }
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
             }
             .navigationTitle("记录")
-            .task { workouts = await HealthKitStore.shared.recentWorkouts() }
+            .task {
+                workouts = await HealthKitStore.shared.recentWorkouts()
+                exportURL = prepareExportFile()
+            }
         }
     }
 
@@ -88,24 +72,15 @@ struct LogView: View {
         String(format: "%d:%02d:%02d", Int(t) / 3600, Int(t) % 3600 / 60, Int(t) % 60)
     }
 
-    private func exportMarkdown() {
-        withAnimation { mdPreview = true }
+    private func prepareExportFile() -> URL? {
         let text = RideEngine.shared.exportLatestRideMarkdown()
-        let url = FileManager.default.temporaryDirectory.appending(path: "ride-\(Int(Date().timeIntervalSince1970)).md")
-        try? text.write(to: url, atomically: true, encoding: .utf8)
-    }
-
-    private var sampleMarkdown: String {
-        """
-        # 骑行 · \(Date().formatted(date: .abbreviated, time: .shortened))
-
-        - 距离: \(String(format: "%.1f", RideEngine.shared.state.distanceKm)) km
-        - 用时: \(Int(RideEngine.shared.state.elapsed / 60)) 分钟
-        - 平均速度: \(String(format: "%.1f", RideEngine.shared.state.averageSpeedKmh)) km/h
-        - 平均心率: \(RideEngine.shared.state.heartRate.map { "\(Int($0))" } ?? "--") bpm
-
-        > 由 骑码 bikecues 导出 · 供人阅读，也供 agent 分析
-        """
+        let url = FileManager.default.temporaryDirectory.appending(path: "骑码-骑行记录.md")
+        do {
+            try text.write(to: url, atomically: true, encoding: .utf8)
+            return url
+        } catch {
+            return nil
+        }
     }
 }
 
