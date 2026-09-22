@@ -17,7 +17,7 @@ struct RideView: View {
     private var idleView: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("咕咕骑行")
+                Text("布谷骑行")
                     .font(.system(size: 68, weight: .bold))
                     .tracking(2)
                 Text("COUCOU BIKE")
