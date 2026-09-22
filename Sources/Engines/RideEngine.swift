@@ -70,7 +70,7 @@ final class RideEngine: ObservableObject {
         let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appending(path: "hr_debug.log")
         if let handle = try? FileHandle(forWritingTo: url) {
-            handle.seekToEnd()
+            try? handle.seekToEnd()
             handle.write(text.data(using: .utf8)!)
             try? handle.close()
         } else {
@@ -118,6 +118,7 @@ final class RideEngine: ObservableObject {
         lastKm = 0
         lastZone = nil
         pausedAccum = 0
+        hrNudgeShown = false
         cues.removeAll()
 
         recorder.start()
