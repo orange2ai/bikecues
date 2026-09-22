@@ -25,6 +25,7 @@ final class RideEngine: ObservableObject {
     private var pausedAccum: TimeInterval = 0
     private var lastPauseStart: Date?
     private var lastKm = 0
+    private var lastKmElapsed: TimeInterval = 0
     private var lastZone: HRZone?
     private var lastIntervalCue: Date?
     private var ticker: Timer?
@@ -121,6 +122,17 @@ final class RideEngine: ObservableObject {
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
         evaluateDim(now: Date())
 
+        // 模拟器演示模式：GPS 不会移动，注入合成数据让播报可测（60 倍速）
+        #if targetEnvironment(simulator)
+        if let s = startDate {
+            let t = Date().timeIntervalSince(s)
+            state.speedKmh = max(4, 23 + sin(t / 7) * 6 + sin(t / 2.3) * 2.5)
+            state.distanceKm += state.speedKmh / 3600 * 60
+            state.heartRate = min(172, max(98, (state.heartRate ?? 118) + (Double.random(in: -2...2.4))))
+            state.heartRateSource = .healthKit
+        }
+        #endif
+
         // 心率兜底源：定时从 HealthKit 捞最新心率（仅在实时观察未生效时使用）
         if state.heartRateSource == .none {
             Task { [weak self] in
@@ -169,8 +181,11 @@ final class RideEngine: ObservableObject {
             let km = Int(state.distanceKm)
             if km > lastKm {
                 lastKm = km
-                let m = Int(state.elapsed) / 60, s = Int(state.elapsed) % 60
-                cue("第 \(km) 公里，用时 \(m) 分 \(String(format: "%02d", s)) 秒，平均速度 \(Int(avg)) 公里每小时", kind: .kmSplit)
+                let split = state.elapsed - lastKmElapsed
+                lastKmElapsed = state.elapsed
+                let splitSpeed = split > 1 ? 3600 / split : state.speedKmh
+                let hrText = state.heartRate.map { "，心率 \(Int($0))" } ?? ""
+                cue("已经骑行 \(km) 公里，最近一公里速度 \(Int(splitSpeed)) 公里\(hrText)", kind: .kmSplit)
             }
         }
 
