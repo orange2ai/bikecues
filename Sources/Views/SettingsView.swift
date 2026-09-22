@@ -8,21 +8,21 @@ struct SettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     section("数据") {
-                        row("苹果健康", sub: "按系统标准写入与读取，不另建孤岛", value: "始终开启", on: true)
-                        row("本地优先", sub: "所有记录先落本机，网络只是锦上添花", value: "架构保证", on: true)
+                        row("苹果健康", sub: "只读只说，记录交给手表原生体能训练", value: "始终开启", on: true)
+                        row("本地优先", sub: "数据只在你设备和你的苹果健康里，无服务器", value: "架构保证", on: true)
                         row("iCloud 同步", sub: "换手机不丢历史，多端一致", value: "规划中", on: false)
                     }
 
                     section("传感器") {
                         row("Apple Watch 心率", sub: "手表上开个体能训练，心率经苹果健康实时上屏", value: engine.state.heartRateSource == .healthKit ? "已连接" : "未连接", on: engine.state.heartRateSource == .healthKit)
-                        row("GPS 速度", sub: "iPhone 定位，无需外设", value: "内置", on: true)
+                        row("里程与速度", sub: "来自体能训练的距离数据流，无需外设", value: "内置", on: true)
                         row("AirPods Pro 3 / 心率带", sub: "标准蓝牙心率源，实时", value: engine.state.heartRateSource == .bluetooth ? "已连接" : "未连接", on: engine.state.heartRateSource == .bluetooth)
                     }
 
                     section("布谷骑行的原则") {
                         principle("01", "省电", "骑行是长时间运动。OLED 纯黑即熄灭，骑行页永远 100% 黑底，不需要变暗的花招。")
-                        principle("02", "原生", "和苹果系统深度打通，记录按最兼容的方式写入苹果健康，也读取系统记录。不导流，不另建孤岛。")
-                        principle("03", "数据永不丢失", "本地优先，健康兜底，iCloud 同步，Markdown 导出。你的数据属于你，也随时可以离开。")
+                        principle("02", "原生", "能原生就原生：记录交给手表体能训练，咕咕只读数据、只管说话。不导流，不另建孤岛。")
+                        principle("03", "数据永不丢失", "数据都在你的苹果健康里，咕咕不碰存储、无服务器，随时全量导出 Markdown。")
                         principle("04", "无广告，永久", "永久不出现广告，也不卖货。你买的是软件本身。")
                         principle("05", "开源，仅限自用", "代码公开，欢迎学习和自建。仅限非商业用途，与商店版本互不冲突。")
                         principle("06", "买断制", "一次付费，永久使用，后续功能不另收费。")
