@@ -14,6 +14,7 @@
 		7FA2DB8834C50F7018B2BC46 /* RideModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAAFC4FC5E6679385242DB18 /* RideModels.swift */; };
 		93D6BD361D528F24607239E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2CDE9672134DA0E28A328E68 /* Assets.xcassets */; };
 		9403624BF97790DCAAAB6B24 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341165BD9284251666AE22C8 /* RootTabView.swift */; };
+		9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235D90503C6B7C457366FFFD /* PraisePool.swift */; };
 		B55140F0E03235BE2406FBBC /* HealthKitStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661852B9722343B8CDA1DB92 /* HealthKitStore.swift */; };
 		CB50FCD05F46E453921BD09D /* CuesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21507F2C07B5CEF0CBA19136 /* CuesView.swift */; };
 		E419C6615DA5A02C4E165EA0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53794E69F6644A06301C01D4 /* SettingsView.swift */; };
@@ -24,6 +25,7 @@
 /* Begin PBXFileReference section */
 		0C650AD87F0E203D6EE40DF0 /* RideEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEngine.swift; sourceTree = "<group>"; };
 		21507F2C07B5CEF0CBA19136 /* CuesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CuesView.swift; sourceTree = "<group>"; };
+		235D90503C6B7C457366FFFD /* PraisePool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PraisePool.swift; sourceTree = "<group>"; };
 		2CDE9672134DA0E28A328E68 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		341165BD9284251666AE22C8 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		4937850F3E610246EA28F22C /* LocationRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationRecorder.swift; sourceTree = "<group>"; };
@@ -52,6 +54,7 @@
 				89890B9A6069886C033F4A06 /* CueSpeaker.swift */,
 				661852B9722343B8CDA1DB92 /* HealthKitStore.swift */,
 				4937850F3E610246EA28F22C /* LocationRecorder.swift */,
+				235D90503C6B7C457366FFFD /* PraisePool.swift */,
 				0C650AD87F0E203D6EE40DF0 /* RideEngine.swift */,
 			);
 			path = Engines;
@@ -174,6 +177,7 @@
 				B55140F0E03235BE2406FBBC /* HealthKitStore.swift in Sources */,
 				E822641B757321525B8654E0 /* LocationRecorder.swift in Sources */,
 				5E0A1406EC91603A56B078D3 /* LogView.swift in Sources */,
+				9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */,
 				EBD9B1B5DAEB92550AFCB6D6 /* RideEngine.swift in Sources */,
 				7FA2DB8834C50F7018B2BC46 /* RideModels.swift in Sources */,
 				333E96E2058C431957AC7EF0 /* RideView.swift in Sources */,
