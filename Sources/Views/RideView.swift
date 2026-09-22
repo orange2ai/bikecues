@@ -159,29 +159,23 @@ struct MainHoldButton: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(progress * 0.14))
-            Text(paused ? "继续 · 长按结束" : "暂停 · 长按结束")
-                .font(.system(size: 15, weight: .medium))
-                .tracking(2)
-                .foregroundStyle(.white)
-        }
-        .frame(height: 60)
-        .frame(maxWidth: .infinity)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(Color(white: 0.24), lineWidth: 1.5)
-        )
-        .overlay(alignment: .bottom) {
+            RoundedRectangle(cornerRadius: 22)
+                .fill(Color(white: 0.10))
             GeometryReader { geo in
                 Rectangle()
                     .fill(Color.orange)
-                    .frame(width: geo.size.width * progress, height: 3)
+                    .frame(width: geo.size.width * progress)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(height: 3)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            Text(paused ? "继续 · 长按结束" : "暂停 · 长按结束")
+                .font(.system(size: 15, weight: .semibold))
+                .tracking(2)
+                .foregroundStyle(progress > 0.55 ? Color.black : Color.white)
         }
-        .contentShape(RoundedRectangle(cornerRadius: 20))
+        .frame(height: 58)
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
