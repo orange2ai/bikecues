@@ -141,19 +141,20 @@ final class RideEngine: ObservableObject {
         let buffered = routeBuffer
         routeBuffer.removeAll()
         Task { @MainActor in
-            if !buffered.isEmpty { self.hk.addRouteLocations(buffered) }
+            self.hk.addRouteLocations(buffered)
             await self.hk.finishRoute()
-            self.hk.endWorkout(end: end) { ok in
-            Task { @MainActor in
-                guard let self else { return }
-                if ok {
-                    var text = "骑行结束，数据已写入苹果健康"
-                    if self.settings.emotionalValue {
-                        text += "。" + PraisePool.finish(distanceKm: self.state.distanceKm)
+            self.hk.endWorkout(end: end) { [weak self] ok in
+                Task { @MainActor in
+                    guard let self else { return }
+                    if ok {
+                        var text = "骑行结束，数据已写入苹果健康"
+                        if self.settings.emotionalValue {
+                            text += "。" + PraisePool.finish(distanceKm: self.state.distanceKm)
+                        }
+                        self.cue(text, kind: .lifecycle)
+                    } else {
+                        self.cue("骑行结束，但健康写入未完成，请检查健康授权", kind: .lifecycle)
                     }
-                    self.cue(text, kind: .lifecycle)
-                } else {
-                    self.cue("骑行结束，但健康写入未完成，请检查健康授权", kind: .lifecycle)
                 }
             }
         }
