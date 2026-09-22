@@ -50,7 +50,7 @@ final class RideEngine: ObservableObject {
             try? await hk.requestAuthorization()
             self.healthAuthorized = self.hk.isAvailable
             self.hrAuthDenied = self.hk.heartRateAuthDenied()
-            print("[coucou][hr] auth done, available=\(self.hk.isAvailable), denied=\(self.hrAuthDenied)")
+            self.hrLog("auth done, available=\(self.hk.isAvailable), denied=\(self.hrAuthDenied)")
             guard self.hk.isAvailable, !self.hrAuthDenied else { return }
             self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
                 Task { @MainActor in
@@ -62,6 +62,22 @@ final class RideEngine: ObservableObject {
         }
     }
 
+    /// 心率链路诊断日志（写入沙盒 Documents，可经 devicectl 拉取）
+    private func hrLog(_ line: String) {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss.SSS"
+        let text = "[\(f.string(from: Date()))] \(line)\n"
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appending(path: "hr_debug.log")
+        if let handle = try? FileHandle(forWritingTo: url) {
+            handle.seekToEnd()
+            handle.write(text.data(using: .utf8)!)
+            try? handle.close()
+        } else {
+            try? text.write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+
     /// 心率看门狗：15 秒没有新样本，视为手表已停/已关，回落“未连接”
     private func startHRWatchdog() {
         hrWatchdog?.invalidate()
@@ -70,6 +86,7 @@ final class RideEngine: ObservableObject {
                 guard let self else { return }
                 if let last = self.lastHRDate,
                    Date().timeIntervalSince(last) > 15, self.state.heartRateSource != .none {
+                    self.hrLog("watchdog: sample age \(Int(Date().timeIntervalSince(last)))s, fall back to disconnected")
                     self.state.heartRate = nil
                     self.state.heartRateSource = .none
                 }
@@ -80,11 +97,11 @@ final class RideEngine: ObservableObject {
                     self.lastHRPoll = Date()
                     Task { [weak self] in
                         if let (date, hr) = await HealthKitStore.shared.latestHeartRate(within: 12) {
-                            print("[coucou][hr] poll hit: bpm=\(Int(hr)), age=\(Int(Date().timeIntervalSince(date)))s")
+                            self?.hrLog("poll hit: bpm=\(Int(hr)), age=\(Int(Date().timeIntervalSince(date)))s")
                             guard let self else { return }
                             self.absorbHeartRate(hr, source: .healthKit, at: date)
                         } else {
-                            print("[coucou][hr] poll miss: no sample within 12s")
+                            self?.hrLog("poll miss: no sample within 12s")
                         }
                     }
                 }
