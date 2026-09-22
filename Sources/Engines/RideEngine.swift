@@ -34,6 +34,9 @@ final class RideEngine: ObservableObject {
     private var hrSegSum: Double = 0
     private var hrSegCount: Int = 0
     private var routeBuffer: [CLLocation] = []
+    // 最后一次收到心率样本的时间：过期回落“未连接”
+    private var lastHRDate: Date?
+    private var hrWatchdog: Timer?
 
     private init() {
         recorder.onLocation = { [weak self] loc in
