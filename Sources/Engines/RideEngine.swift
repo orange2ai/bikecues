@@ -142,7 +142,6 @@ final class RideEngine: ObservableObject {
         routeBuffer.removeAll()
         Task { @MainActor in
             self.hk.addRouteLocations(buffered)
-            await self.hk.finishRoute()
             self.hk.endWorkout(end: end) { [weak self] ok in
                 Task { @MainActor in
                     guard let self else { return }
