@@ -52,7 +52,7 @@ final class RideEngine: ObservableObject {
 
         recorder.start()
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
-        cue("已开始记录，布谷陪你出发", kind: .lifecycle)
+        cue("已开始记录，咕咕陪你出发", kind: .lifecycle)
 
         // 记录中屏幕常亮：OLED 纯黑本身几乎不耗电
         UIApplication.shared.isIdleTimerDisabled = true
@@ -255,7 +255,7 @@ final class RideEngine: ObservableObject {
             "- 心率源: \(state.heartRateSource.rawValue)\(hrStr)",
             "- 播报记录: \(cues.count) 条",
             "",
-            "> 由 布谷骑行 Coucou Bike 导出 · 供人阅读，也供 agent 分析",
+            "> 由 咕咕骑行 Coucou Bike 导出 · 供人阅读，也供 agent 分析",
         ]
         for c in cues.reversed() {
             let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
