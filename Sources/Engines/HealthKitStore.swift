@@ -3,6 +3,19 @@ import CoreLocation
 import HealthKit
 
 /// HealthKit 读写：训练写入 + 心率读取（延迟兜底）+ 历史查询
+/// 保证 continuation 只被 resume 一次（HealthKit 回调可能多次到达）
+private final class ResumeOnce {
+    private let lock = NSLock()
+    private var fired = false
+    func run(_ body: () -> Void) {
+        lock.lock()
+        if fired { lock.unlock(); return }
+        fired = true
+        lock.unlock()
+        body()
+    }
+}
+
 final class HealthKitStore {
     static let shared = HealthKitStore()
     private let store = HKHealthStore()
