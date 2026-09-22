@@ -28,6 +28,8 @@ final class RideEngine: ObservableObject {
     private var lastZone: HRZone?
     private var lastIntervalCue: Date?
     private let praise = PraisePicker()
+    private var isAutoPaused = false
+    private var lowSpeedTicks = 0
     private var ticker: Timer?
     // 本公里心率累计（用于“平均心率”播报）
     private var hrSegSum: Double = 0
@@ -79,15 +81,36 @@ final class RideEngine: ObservableObject {
     func pause() {
         guard phase == .riding else { return }
         phase = .paused
+        isAutoPaused = false
         lastPauseStart = Date()
         recorder.stop()
         cue(settings.emotionalValue ? "已暂停。" + PraisePool.pause : "已暂停", kind: .lifecycle)
+    }
+
+    /// 低速自动暂停：GPS 保持开启，以便检测重新出发
+    private func autoPause() {
+        guard phase == .riding else { return }
+        phase = .paused
+        isAutoPaused = true
+        lastPauseStart = Date()
+        cue("已自动暂停，咕咕帮你盯着，动起来就继续", kind: .lifecycle)
+    }
+
+    private func autoResume() {
+        guard phase == .paused, isAutoPaused else { return }
+        pausedAccum += Date().timeIntervalSince(lastPauseStart ?? Date())
+        phase = .riding
+        isAutoPaused = false
+        lowSpeedTicks = 0
+        cue("继续骑行，咕咕盯着呢", kind: .lifecycle)
     }
 
     func resume() {
         guard phase == .paused else { return }
         pausedAccum += Date().timeIntervalSince(lastPauseStart ?? Date())
         phase = .riding
+        isAutoPaused = false
+        lowSpeedTicks = 0
         recorder.start()
         cue("继续骑行", kind: .lifecycle)
     }
@@ -97,14 +120,21 @@ final class RideEngine: ObservableObject {
         let end = Date()
         recorder.stop()
         hk.stopLiveHeartRateObservation()
-        // 能量粗估（骑行 ≈ 8 MET），有真实心率源时苹果健康自己会重算
         let start = startDate ?? end.addingTimeInterval(-max(state.elapsed, 1))
-        let kcal = 9.8 * max(state.elapsed, 0) / 60
-        if kcal > 0.5 { hk.addEnergySample(kcal: kcal, start: start, end: end) }
         CueSpeaker.shared.deactivateSession()
         stopTicker()
         UIApplication.shared.isIdleTimerDisabled = false
         phase = .idle
+
+        // 一分钟以内的骑行视为测试，不写入健康
+        if state.elapsed < 60 {
+            hk.discardWorkout()
+            cue("骑了不到一分钟，咕咕当你在测试，没有记录", kind: .lifecycle)
+            return
+        }
+
+        let kcal = 9.8 * max(state.elapsed, 0) / 60
+        if kcal > 0.5 { hk.addEnergySample(kcal: kcal, start: start, end: end) }
         hk.endWorkout(end: end) { [weak self] ok in
             Task { @MainActor in
                 guard let self else { return }
@@ -141,6 +171,20 @@ final class RideEngine: ObservableObject {
         state.elapsed = Date().timeIntervalSince(start) - pausedAccum
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
 
+        // 低速自动暂停：连续 3 秒低于 1 km/h
+        if settings.autoPause {
+            if state.speedKmh < 1 {
+                lowSpeedTicks += 1
+                if lowSpeedTicks >= 3 {
+                    lowSpeedTicks = 0
+                    autoPause()
+                    return
+                }
+            } else {
+                lowSpeedTicks = 0
+            }
+        }
+
         // 模拟器演示模式：GPS 不会移动，注入合成数据让播报可测（60 倍速）
         #if targetEnvironment(simulator)
         if let s = startDate {
@@ -167,6 +211,13 @@ final class RideEngine: ObservableObject {
     // MARK: - 数据吸收
 
     private func absorb(location: CLLocation) {
+        // 自动暂停状态下继续监听位置，速度起来就自动继续
+        if phase == .paused {
+            if isAutoPaused, location.speed > 3 / 3.6 {
+                autoResume()
+            }
+            return
+        }
         guard phase == .riding else { return }
         let kmh = max(0, location.speed * 3.6)
         state.speedKmh = kmh.isFinite ? kmh : 0

@@ -44,7 +44,8 @@ struct CueSettings: Codable, Equatable {
     var hrZoneAlert: Bool = true
     var paceAnomaly: Bool = false
     var mixWithAudio: Bool = true      // 混音播放，不暂停音乐
-    var emotionalValue: Bool = true    // 情绪价值：多邻国式夸夸
+    var emotionalValue: Bool = true    // 情绪价值：歪嘴夸夸
+    var autoPause: Bool = true         // 低速自动暂停/继续
 
     static func load() -> CueSettings {
         guard let data = UserDefaults.standard.data(forKey: "cue.settings"),
@@ -71,6 +72,7 @@ extension CueSettings {
         paceAnomaly = try c.decodeIfPresent(Bool.self, forKey: .paceAnomaly) ?? false
         mixWithAudio = try c.decodeIfPresent(Bool.self, forKey: .mixWithAudio) ?? true
         emotionalValue = try c.decodeIfPresent(Bool.self, forKey: .emotionalValue) ?? true
+        autoPause = try c.decodeIfPresent(Bool.self, forKey: .autoPause) ?? true
     }
 }
 

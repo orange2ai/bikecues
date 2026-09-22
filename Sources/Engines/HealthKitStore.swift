@@ -85,6 +85,11 @@ final class HealthKitStore {
         }
     }
 
+    func discardWorkout() {
+        builder?.discardWorkout()
+        builder = nil
+    }
+
     // MARK: - 心率读取
 
     private var hrObserver: HKQuery?

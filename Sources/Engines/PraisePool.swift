@@ -1,6 +1,6 @@
 import Foundation
 
-/// 情绪价值台词池：多邻国那种劲儿，正经报数之外的歪嘴夸夸
+/// 情绪价值台词池：正经报数之外的歪嘴夸夸
 enum PraisePool {
     static let perKilometer: [String] = [
         "腿在燃烧，脂肪在哭泣，咕咕在看。",
