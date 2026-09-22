@@ -192,6 +192,38 @@ struct LogView: View {
                 lines.append("| \(t.string(from: date)) | \(Int(rpm)) |")
             }
         }
+        // 每公里分段：从轨迹累计距离算，配该时段平均心率
+        if route.count > 1 {
+            var splits: [(km: Int, seconds: TimeInterval)] = []
+            var cum = 0.0
+            var kmIndex = 1
+            var segStart = route[0].timestamp
+            var last = route[0]
+            for loc in route.dropFirst() {
+                cum += loc.distance(from: last)
+                last = loc
+                if cum >= Double(kmIndex) * 1000 {
+                    splits.append((kmIndex, loc.timestamp.timeIntervalSince(segStart)))
+                    kmIndex += 1
+                    segStart = loc.timestamp
+                }
+            }
+            if !splits.isEmpty {
+                lines.append("\n## 每公里分段\n")
+                lines.append("| 公里 | 用时 | 均速 km/h | 平均心率 |\n|---|---|---|---|")
+                var segStartTime = route[0].timestamp
+                for (i, sp) in splits.enumerated() {
+                    let segEndTime = i + 1 < splits.count ? splits[i+1].seconds : last.timestamp.timeIntervalSince(route[0].timestamp)
+                    let segEnd = route[0].timestamp.addingTimeInterval(segEndTime)
+                    let speed = sp.seconds > 0 ? 3600.0 / sp.seconds : 0
+                    let segHR = hr.filter { $0.0 >= segStartTime && $0.0 <= segEnd }
+                    let avg = segHR.isEmpty ? "--" : String(format: "%.0f", segHR.map { $0.1 }.reduce(0, +) / Double(segHR.count))
+                    let mm = Int(sp.seconds) / 60, ss = Int(sp.seconds) % 60
+                    lines.append(String(format: "| %d | %d:%02d | %.1f | %@ |", sp.km, mm, ss, speed, avg))
+                    segStartTime = segEnd
+                }
+            }
+        }
         if !route.isEmpty {
             lines.append("\n## 轨迹（\(route.count) 个点）\n")
             lines.append("| 时间 | 纬度 | 经度 | 海拔 m | 速度 km/h |\n|---|---|---|---|---|")

@@ -33,6 +33,7 @@ final class RideEngine: ObservableObject {
     // 本公里心率累计（用于“平均心率”播报）
     private var hrSegSum: Double = 0
     private var hrSegCount: Int = 0
+    private var routeBuffer: [CLLocation] = []
 
     private init() {
         recorder.onLocation = { [weak self] loc in
@@ -130,13 +131,19 @@ final class RideEngine: ObservableObject {
         // 一分钟以内的骑行视为测试，不写入健康
         if state.elapsed < 60 {
             hk.discardWorkout()
+            routeBuffer.removeAll()
             cue("骑了不到一分钟，咕咕当你在测试，没有记录", kind: .lifecycle)
             return
         }
 
         let kcal = 9.8 * max(state.elapsed, 0) / 60
         if kcal > 0.5 { hk.addEnergySample(kcal: kcal, start: start, end: end) }
-        hk.endWorkout(end: end) { [weak self] ok in
+        let buffered = routeBuffer
+        routeBuffer.removeAll()
+        Task { @MainActor in
+            if !buffered.isEmpty { self.hk.addRouteLocations(buffered) }
+            await self.hk.finishRoute()
+            self.hk.endWorkout(end: end) { ok in
             Task { @MainActor in
                 guard let self else { return }
                 if ok {
@@ -231,6 +238,11 @@ final class RideEngine: ObservableObject {
         }
         lastLocation = location
         state.elevationM = location.altitude
+        routeBuffer.append(location)
+        if routeBuffer.count >= 10 {
+            hk.addRouteLocations(routeBuffer)
+            routeBuffer.removeAll()
+        }
     }
 
     private var lastLocation: CLLocation?

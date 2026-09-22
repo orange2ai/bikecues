@@ -56,6 +56,7 @@ final class HealthKitStore {
     // MARK: - 训练写入（WorkoutBuilder）
 
     private var builder: HKWorkoutBuilder?
+    private var routeBuilder: HKWorkoutRouteBuilder?
 
     func startWorkout(start: Date) {
         guard isAvailable else { return }
@@ -65,6 +66,7 @@ final class HealthKitStore {
         let b = HKWorkoutBuilder(healthStore: store, configuration: config, device: .local())
         b.beginCollection(withStart: start) { _, _ in }
         builder = b
+        routeBuilder = HKWorkoutRouteBuilder(healthStore: store, device: .local())
     }
 
     func addDistanceSample(meters: Double, at date: Date) {
@@ -102,6 +104,26 @@ final class HealthKitStore {
     func discardWorkout() {
         builder?.discardWorkout()
         builder = nil
+        routeBuilder = nil
+    }
+
+    /// 轨迹入库：攒一批点写一次，省事务开销
+    func addRouteLocations(_ locations: [CLLocation]) {
+        guard let routeBuilder, isAvailable, !locations.isEmpty else { return }
+        routeBuilder.addLocations(locations) { _, _ in }
+    }
+
+    /// 结束时把剩余轨迹收尾写入（必须在 endWorkout 前）
+    func finishRoute() async {
+        guard let routeBuilder else { return }
+        self.routeBuilder = nil
+        let metadata = [HKMetadataKeySyncIdentifier: UUID().uuidString]
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            routeBuilder.finishRoute(with: metadata) { _, error in
+                if let error { print("[coucou] finishRoute error:", error.localizedDescription) }
+                cont.resume()
+            }
+        }
     }
 
     /// 某次体能训练期间的平均心率
