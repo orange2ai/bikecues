@@ -60,8 +60,8 @@ final class RideEngine: ObservableObject {
     /// 心率看门狗：15 秒没有新样本，视为手表已停/已关，回落“未连接”
     private func startHRWatchdog() {
         hrWatchdog?.invalidate()
-        hrWatchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            Task { @MainActor in
+        hrWatchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 guard let last = self.lastHRDate else { return }
                 if Date().timeIntervalSince(last) > 15, self.state.heartRateSource != .none {
