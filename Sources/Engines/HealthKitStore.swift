@@ -9,8 +9,13 @@ final class HealthKitStore {
     private init() {}
 
     private var entitled: Bool {
-        // 无 HealthKit 能力的构建（临时测试包）里完全不触碰 HealthKit，避免运行时异常
-        Bundle.main.object(forInfoDictionaryKey: "BIKECUES_HEALTHKIT") as? Bool ?? false
+        // 无 HealthKit 能力的构建（临时测试包）里完全不触碰 HealthKit，避免运行时异常。
+        // 注意：Info.plist 经构建处理后布尔可能以字符串形式存在，必须两种都认。
+        switch Bundle.main.object(forInfoDictionaryKey: "BIKECUES_HEALTHKIT") {
+        case let flag as Bool: return flag
+        case let flag as String: return ["yes", "1", "true"].contains(flag.lowercased())
+        default: return false
+        }
     }
 
     var isAvailable: Bool { entitled && HKHealthStore.isHealthDataAvailable() }
