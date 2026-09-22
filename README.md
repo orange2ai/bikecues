@@ -1,5 +1,7 @@
 # 咕咕骑车 Coucou Bike
 
+官网 [coucoubike.com](https://coucoubike.com) · 隐私政策 [不收集任何数据](https://coucoubike.com/privacy.html)
+
 为骑行而生的 iPhone 语音播报 App。
 
 主流运动 App 开始往语音播报里塞广告，苹果自带的体能训练能显示实时数据却不能播报，咕咕骑车就是为填这个空位而做的：骑行时，有一只鸟在你耳机里报数。

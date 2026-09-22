@@ -20,13 +20,6 @@ struct SettingsView: View {
                         row("AirPods Pro 3 / 心率带", sub: "标准蓝牙心率源，实时", value: engine.state.heartRateSource == .bluetooth ? "已连接" : "未连接", on: engine.state.heartRateSource == .bluetooth)
                     }
 
-                    section("关于") {
-                        linkRow("官网", value: "coucoubike.com", url: "https://coucoubike.com")
-                        linkRow("GitHub 仓库", value: "orange2ai/coucou-bike", url: "https://github.com/orange2ai/coucou-bike")
-                        linkRow("隐私政策", value: "不收集任何数据", url: "https://coucoubike.com/privacy.html")
-                        row("版本", sub: "咕咕骑车 Coucou Bike", value: appVersion, on: true)
-                    }
-
                     section("咕咕骑车的原则") {
                         principle("01", "省电", "骑行是长时间运动。OLED 纯黑即熄灭，骑行页永远 100% 黑底，不需要变暗的花招。")
                         principle("02", "原生", "和苹果系统深度打通，记录按最兼容的方式写入苹果健康，也读取系统记录。不导流，不另建孤岛。")
@@ -36,10 +29,19 @@ struct SettingsView: View {
                         principle("06", "买断制", "一次付费，永久使用，后续功能不另收费。")
                         principle("07", "不发明 UI", "能用苹果就苹果：列表是 List，开关是 Toggle，导出走系统分享。不重新发明系统已经做好的东西。")
                     }
+
+                    section("关于") {
+                        linkRow("官网", sub: "coucoubike.com", value: "打开", url: "https://coucoubike.com")
+                        linkRow("GitHub 仓库", sub: "orange2ai/coucou-bike", value: "打开", url: "https://github.com/orange2ai/coucou-bike")
+                        linkRow("隐私政策", sub: "不收集任何数据", value: "查看", url: "https://coucoubike.com/privacy.html")
+                        row("版本", sub: "咕咕骑车 Coucou Bike", value: appVersion, on: true)
+                    }
+
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
             }
+            .modifier(DebugBottomAnchor())
             .navigationTitle("设置")
             .alert("想看实时心率？", isPresented: $showHRHint) {
                 Button("打开体能训练") {
@@ -69,20 +71,29 @@ struct SettingsView: View {
         return "\(v) (\(b))"
     }
 
-    private func linkRow(_ name: String, value: String, url: String) -> some View {
+    private func linkRow(_ name: String, sub: String, value: String, url: String) -> some View {
         Button {
             if let u = URL(string: url) { UIApplication.shared.open(u) }
         } label: {
             HStack {
-                Text(name)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name).font(.body)
+                    Text(sub).font(.caption).foregroundStyle(.gray)
+                }
                 Spacer()
-                Text(value)
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                Image(systemName: "arrow.up.right")
-                    .font(.caption2)
-                    .foregroundStyle(.orange.opacity(0.7))
+                HStack(spacing: 4) {
+                    Text(value)
+                        .font(.caption)
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption2)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(Color.orange.opacity(0.12))
+                .foregroundStyle(Color.orange)
+                .clipShape(Capsule())
             }
+            .padding(14)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -138,5 +149,20 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+
+/// 临时调试：-scrollBottom 时设置页停在底部，便于截图检查
+struct DebugBottomAnchor: ViewModifier {
+    private var enabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("-scrollBottom")
+    }
+    func body(content: Content) -> some View {
+        if enabled {
+            content.defaultScrollAnchor(.bottom)
+        } else {
+            content
+        }
     }
 }
