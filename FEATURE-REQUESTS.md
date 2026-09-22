@@ -13,7 +13,6 @@
 - [ ] **Keep 手环 / 第三方手环心率**：调研 Keep 手环的蓝牙协议是否为标准 Heart Rate Profile 或存在公开通道。若是私有协议，优先级降为低。
 - [ ] **Apple Watch 伴侣 App**：抬腕即看的实时码表，WatchConnectivity 同步状态。
 - [ ] **手表独立记录**：HKWorkoutSession，不带手机也能骑。
-- [ ] **iCloud 同步**：历史数据跨设备（走用户自己的 iCloud，不建服务器）。
 
 ## 低优 / 备选
 
