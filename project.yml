@@ -24,7 +24,7 @@ targets:
         com.apple.developer.healthkit: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.orange2ai.bikecues
+        PRODUCT_BUNDLE_IDENTIFIER: ai.marswave.bikecues
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
