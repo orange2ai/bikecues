@@ -42,6 +42,25 @@ struct RideView: View {
             }
             .frame(maxWidth: .infinity)
 
+            // GO 之前就能看到心率设备是否在线（手表体能训练在跑即亮）
+            Button {
+                showHRHint = true
+            } label: {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(engine.state.heartRateSource == .healthKit ? Color.green : Color(white: 0.3))
+                        .frame(width: 7, height: 7)
+                    Text(engine.state.heartRateSource == .healthKit ? "心率已连接" : "心率未连接")
+                        .font(.footnote)
+                }
+                .foregroundStyle(Color(white: 0.55))
+                .padding(.vertical, 6)
+                .padding(.horizontal, 14)
+                .background(Color(white: 0.08))
+                .clipShape(Capsule())
+            }
+            .padding(.top, 28)
+
             Spacer()
         }
     }
