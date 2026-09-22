@@ -57,8 +57,13 @@ struct RideView: View {
             .confirmationDialog("准备出发", isPresented: $showStartDialog,
                                 titleVisibility: .visible) {
                 Button("打开体能训练（记心率）") {
-                    let opened = URL(string: "x-apple-fitness://").flatMap { UIApplication.shared.open($0) }
-                    if opened != true { deepLinkFailed = true }
+                    if let url = URL(string: "x-apple-fitness://") {
+                        UIApplication.shared.open(url) { ok in
+                            if !ok { deepLinkFailed = true }
+                        }
+                    } else {
+                        deepLinkFailed = true
+                    }
                 }
                 Button("我已打开，开始骑行") {
                     engine.startRide()
