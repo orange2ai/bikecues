@@ -211,7 +211,7 @@ final class RideEngine: ObservableObject {
                 hrSegCount = 0
                 var text = "已经骑行 \(km) 公里，最近一公里平均速度 \(Int(splitSpeed)) 公里\(hrText)"
                 // 情绪价值：报完正事，三成概率补一句歪嘴夸夸
-                if settings.emotionalValue, Bool.random() < 0.35,
+                if settings.emotionalValue, Double.random(in: 0..<1) < 0.35,
                    let line = praise.pick(from: PraisePool.perKilometer) {
                     text += " " + line
                 }
