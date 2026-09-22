@@ -1,6 +1,6 @@
 name: bikecues
 options:
-  bundleIdPrefix: com.orange2ai
+  bundleIdPrefix: com.marswave
   createIntermediateGroups: true
   deploymentTarget:
     iOS: "17.0"
@@ -9,7 +9,8 @@ settings:
     SWIFT_VERSION: "5.10"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: CJSWWQ2B9V
+    BIKECUES_HK: YES
     CODE_SIGN_STYLE: Automatic
 targets:
   bikecues:
@@ -42,3 +43,4 @@ targets:
           - location
           - processing
         CFBundleDisplayName: 骑码
+        BIKECUES_HEALTHKIT: $(BIKECUES_HK)

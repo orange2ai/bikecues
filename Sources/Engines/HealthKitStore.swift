@@ -8,7 +8,12 @@ final class HealthKitStore {
 
     private init() {}
 
-    var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
+    private var entitled: Bool {
+        // 无 HealthKit 能力的构建（临时测试包）里完全不触碰 HealthKit，避免运行时异常
+        Bundle.main.object(forInfoDictionaryKey: "BIKECUES_HEALTHKIT") as? Bool ?? false
+    }
+
+    var isAvailable: Bool { entitled && HKHealthStore.isHealthDataAvailable() }
 
     func requestAuthorization() async throws {
         guard isAvailable else { return }
