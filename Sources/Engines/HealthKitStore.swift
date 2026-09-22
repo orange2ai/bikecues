@@ -90,16 +90,62 @@ final class HealthKitStore {
         builder = nil
     }
 
-    /// 某次体能训练期间的平均心率（导出用）
+    /// 某次体能训练期间的平均心率
     func averageHeartRate(for workout: HKWorkout) async -> Double? {
-        guard isAvailable else { return nil }
+        let samples = await heartRateSamples(for: workout)
+        guard !samples.isEmpty else { return nil }
+        return samples.map { $0.1 }.reduce(0, +) / Double(samples.count)
+    }
+
+    /// 某次体能训练的心率时间序列
+    func heartRateSamples(for workout: HKWorkout) async -> [(Date, Double)] {
+        guard isAvailable else { return [] }
         let type = HKQuantityType(.heartRate)
         let predicate = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
         return await withCheckedContinuation { cont in
-            let q = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+            let q = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
+                                  sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: true)]) { _, samples, _ in
                 let unit = HKUnit.count().unitDivided(by: .minute())
-                let hrs = (samples as? [HKQuantitySample])?.map { $0.quantity.doubleValue(for: unit) } ?? []
-                cont.resume(returning: hrs.isEmpty ? nil : hrs.reduce(0, +) / Double(hrs.count))
+                let out = (samples as? [HKQuantitySample])?.map { ($0.endDate, $0.quantity.doubleValue(for: unit)) } ?? []
+                cont.resume(returning: out)
+            }
+            store.execute(q)
+        }
+    }
+
+    /// 某次体能训练的踏频时间序列（有则导出，无则空）
+    func cadenceSamples(for workout: HKWorkout) async -> [(Date, Double)] {
+        guard isAvailable else { return [] }
+        let type = HKQuantityType(.cyclingCadence)
+        let predicate = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        return await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit,
+                                  sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: true)]) { _, samples, _ in
+                let unit = HKUnit.count().unitDivided(by: .minute())
+                let out = (samples as? [HKQuantitySample])?.map { ($0.endDate, $0.quantity.doubleValue(for: unit)) } ?? []
+                cont.resume(returning: out)
+            }
+            store.execute(q)
+        }
+    }
+
+    /// 某次体能训练的 GPS 轨迹逐点
+    func routeLocations(for workout: HKWorkout) async -> [CLLocation] {
+        guard isAvailable else { return [] }
+        let routes: [HKWorkoutRoute] = await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: HKSeriesType.workoutRoute(),
+                                  predicate: HKQuery.predicateForObjects(from: workout),
+                                  limit: 1, sortDescriptors: nil) { _, samples, _ in
+                cont.resume(returning: samples as? [HKWorkoutRoute] ?? [])
+            }
+            store.execute(q)
+        }
+        guard let route = routes.first else { return [] }
+        return await withCheckedContinuation { cont in
+            var acc: [CLLocation] = []
+            let q = HKWorkoutRouteQuery(route: route) { _, locations, done, _, error in
+                acc.append(contentsOf: locations)
+                if done || error != nil { cont.resume(returning: acc) }
             }
             store.execute(q)
         }

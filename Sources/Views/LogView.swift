@@ -7,6 +7,8 @@ struct LogView: View {
     @State private var exportURLs: [UUID: URL] = [:]
     @State private var workoutToDelete: HKWorkout?
     @State private var deleteFailed = false
+    @State private var shareItems: [Any] = []
+    @State private var exporting = false
 
     var body: some View {
         NavigationStack {
@@ -63,6 +65,10 @@ struct LogView: View {
             .alert("删除失败，请检查苹果健康授权", isPresented: $deleteFailed) {
                 Button("好", role: .cancel) {}
             }
+            .sheet(isPresented: Binding(get: { !shareItems.isEmpty },
+                                        set: { if !$0 { shareItems = [] } })) {
+                ShareSheet(items: shareItems)
+            }
             .task { await load() }
         }
     }
@@ -74,8 +80,12 @@ struct LogView: View {
                     .font(.subheadline).bold()
                 Spacer()
                 HStack(spacing: 4) {
-                    if let url = exportURLs[w.uuid] {
-                        ShareLink(item: url) {
+                    Button {
+                        exportFull(w)
+                    } label: {
+                        if exporting {
+                            ProgressView().frame(width: 34, height: 34)
+                        } else {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.subheadline)
                                 .foregroundStyle(.orange)
@@ -84,16 +94,7 @@ struct LogView: View {
                                 .clipShape(Circle())
                         }
                     }
-                    Button {
-                        workoutToDelete = w
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.subheadline)
-                            .foregroundStyle(.red.opacity(0.8))
-                            .frame(width: 34, height: 34)
-                            .background(Color(white: 0.12))
-                            .clipShape(Circle())
-                    }
+                    .disabled(exporting)
                 }
             }
             HStack(spacing: 14) {
@@ -121,35 +122,88 @@ struct LogView: View {
 
     private func load() async {
         workouts = await HealthKitStore.shared.recentWorkouts()
-        for w in workouts {
-            guard exportURLs[w.uuid] == nil else { continue }
-            let hr = await HealthKitStore.shared.averageHeartRate(for: w)
-            let text = Self.markdown(for: w, avgHR: hr)
+    }
+
+    /// 全量导出：这条训练在苹果健康里的一切
+    private func exportFull(_ w: HKWorkout) {
+        exporting = true
+        Task {
+            let text = await Self.fullMarkdown(for: w)
             let f = DateFormatter()
             f.dateFormat = "yyyyMMdd-HHmm"
             let url = FileManager.default.temporaryDirectory
                 .appending(path: "咕咕骑车-\(f.string(from: w.startDate)).md")
             try? text.write(to: url, atomically: true, encoding: .utf8)
-            exportURLs[w.uuid] = url
+            await MainActor.run {
+                exporting = false
+                shareItems = [url]
+            }
         }
     }
 
-    private static func markdown(for w: HKWorkout, avgHR: Double?) -> String {
+    private static func fullMarkdown(for w: HKWorkout) async -> String {
+        let hr = await HealthKitStore.shared.heartRateSamples(for: w)
+        let cadence = await HealthKitStore.shared.cadenceSamples(for: w)
+        let route = await HealthKitStore.shared.routeLocations(for: w)
         let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm"
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let t = DateFormatter(); t.dateFormat = "HH:mm:ss"
+
         let km = w.totalDistance.map { String(format: "%.2f", $0.doubleValue(for: .meter()) / 1000) } ?? "--"
-        let hrText = avgHR.map { String(format: "，平均心率 %.0f bpm", $0) } ?? ""
         let energy = w.totalEnergyBurned.map { String(format: "%.0f 千卡", $0.doubleValue(for: .kilocalorie())) } ?? "--"
-        return """
+        let avgHR = hr.isEmpty ? nil : hr.map { $0.1 }.reduce(0, +) / Double(hr.count)
+        let maxHR = hr.map { $0.1 }.max()
+        let elevGain: Double = {
+            var gain = 0.0
+            for i in 1..<route.count {
+                let d = route[i].altitude - route[i-1].altitude
+                if d > 0 { gain += d }
+            }
+            return gain
+        }()
+
+        var lines = ["""
         # 骑行 · \(f.string(from: w.startDate))
 
         - 距离: \(km) km
         - 用时: \(Int(w.duration) / 60) 分钟
-        - 消耗: \(energy)\(hrText)
+        - 消耗: \(energy)
+        - 平均心率: \(avgHR.map { String(format: "%.0f bpm", $0) } ?? "--")
+        - 最大心率: \(maxHR.map { String(format: "%.0f bpm", $0) } ?? "--")
+        - 累计爬升: \(String(format: "%.0f", elevGain)) m
+        - 数据来源: \(w.sourceRevision.source.name)
+        - 记录设备: \(w.device?.name ?? "--")
 
-        > 由 咕咕骑行 Coucou Bike 导出 · 供人阅读，也供 agent 分析
-        """
+        > 由 咕咕骑行 Coucou Bike 全量导出自苹果健康 · 供人阅读，也供 agent 分析
+        """]
+
+        if !hr.isEmpty {
+            lines.append("\n## 心率（\(hr.count) 条）\n")
+            lines.append("| 时间 | 心率 bpm |\n|---|---|")
+            for (date, bpm) in hr {
+                lines.append("| \(t.string(from: date)) | \(Int(bpm)) |")
+            }
+        }
+        if !cadence.isEmpty {
+            lines.append("\n## 踏频（\(cadence.count) 条）\n")
+            lines.append("| 时间 | 踏频 rpm |\n|---|---|")
+            for (date, rpm) in cadence {
+                lines.append("| \(t.string(from: date)) | \(Int(rpm)) |")
+            }
+        }
+        if !route.isEmpty {
+            lines.append("\n## 轨迹（\(route.count) 个点）\n")
+            lines.append("| 时间 | 纬度 | 经度 | 海拔 m | 速度 km/h |\n|---|---|---|---|---|")
+            for loc in route {
+                let speed = max(0, loc.speed) * 3.6
+                lines.append(String(format: "| %@ | %.5f | %.5f | %.0f | %.1f |",
+                                    t.string(from: loc.timestamp), loc.coordinate.latitude,
+                                    loc.coordinate.longitude, loc.altitude, speed))
+            }
+        }
+        return lines.joined(separator: "\n")
     }
+
 }
 
 extension MeasurementFormatter {
@@ -157,4 +211,14 @@ extension MeasurementFormatter {
         guard let q else { return "0.0 km" }
         return String(format: "%.1f km", q.doubleValue(for: .meter()) / 1000)
     }
+}
+
+import UIKit
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
