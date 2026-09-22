@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RideView: View {
     @EnvironmentObject var engine: RideEngine
+    @State private var showHRHint = false
 
     var body: some View {
         Group {
