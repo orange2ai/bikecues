@@ -37,6 +37,7 @@ final class RideEngine: ObservableObject {
     private var routeBuffer: [CLLocation] = []
     // 最后一次收到心率样本的时间：过期回落“未连接”
     private var lastHRDate: Date?
+    private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
 
     private init() {
@@ -65,10 +66,21 @@ final class RideEngine: ObservableObject {
         hrWatchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                guard let last = self.lastHRDate else { return }
-                if Date().timeIntervalSince(last) > 15, self.state.heartRateSource != .none {
+                if let last = self.lastHRDate,
+                   Date().timeIntervalSince(last) > 15, self.state.heartRateSource != .none {
                     self.state.heartRate = nil
                     self.state.heartRateSource = .none
+                }
+                // 断连期间每 5 秒主动捞一次最近样本：中途开手表也能快速连上
+                if self.state.heartRateSource == .none, !self.hrAuthDenied,
+                   self.lastHRDate == nil || Date().timeIntervalSince(self.lastHRDate!) > 15,
+                   self.lastHRPoll == nil || Date().timeIntervalSince(self.lastHRPoll!) > 5 {
+                    self.lastHRPoll = Date()
+                    Task { [weak self] in
+                        let hr = await HealthKitStore.shared.latestHeartRate(within: 90)
+                        guard let self, let hr else { return }
+                        self.absorbHeartRate(hr, source: .healthKit)
+                    }
                 }
             }
         }

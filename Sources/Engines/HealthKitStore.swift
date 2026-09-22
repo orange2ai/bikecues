@@ -195,15 +195,21 @@ final class HealthKitStore {
         guard isAvailable, hrObserver == nil else { return }
         let type = HKQuantityType(.heartRate)
         let unit = HKUnit.count().unitDivided(by: .minute())
-        let q = HKAnchoredObjectQuery(type: type, predicate: nil, anchor: hrAnchor, limit: HKObjectQueryNoLimit) { [weak self] _, samples, _, newAnchor, _ in
-            guard let self else { return }
-            self.hrAnchor = newAnchor
+        func process(_ samples: [HKSample]?, anchor: HKQueryAnchor?) {
+            hrAnchor = anchor
             for s in samples ?? [] {
                 if let hs = s as? HKQuantitySample {
                     let bpm = hs.quantity.doubleValue(for: unit)
                     DispatchQueue.main.async { handler(bpm, hs.endDate) }
                 }
             }
+        }
+        let q = HKAnchoredObjectQuery(type: type, predicate: nil, anchor: hrAnchor, limit: HKObjectQueryNoLimit) { _, samples, _, newAnchor, _ in
+            process(samples, anchor: newAnchor)
+        }
+        // 关键：长驻更新回调。缺了它查询只跑一次，永远“不实时”。
+        q.updateHandler = { _, samples, _, newAnchor, _ in
+            process(samples, anchor: newAnchor)
         }
         store.execute(q)
         hrObserver = q

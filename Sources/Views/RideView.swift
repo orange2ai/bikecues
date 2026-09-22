@@ -65,10 +65,7 @@ struct RideView: View {
                         deepLinkFailed = true
                     }
                 }
-                Button("我已打开，开始骑行") {
-                    engine.startRide()
-                }
-                Button("直接骑行，不用心率") {
+                Button("开始骑行") {
                     engine.startRide()
                 }
                 Button("取消", role: .cancel) {}
@@ -86,24 +83,6 @@ struct RideView: View {
     // MARK: - 骑行中（沉浸：无页签，纯黑 OLED）
     private var liveView: some View {
         VStack(spacing: 0) {
-            HStack {
-                HStack(spacing: 6) {
-                    Circle()
-                        .strokeBorder(engine.phase == .paused ? Color.gray : Color.white, lineWidth: 1.5)
-                        .background(Circle().fill(engine.phase == .paused ? Color.clear : Color.white))
-                        .frame(width: 7, height: 7)
-                    Text(engine.phase == .paused ? "已暂停" : "记录中")
-                }
-                .foregroundStyle(.gray)
-                .font(.caption)
-                Spacer()
-                Text(Date(), style: .time)
-                    .foregroundStyle(.gray)
-                    .font(.caption)
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 8)
-
             Spacer(minLength: 0)
 
             // 速度
