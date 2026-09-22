@@ -203,7 +203,7 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "咕咕骑车使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。";
 				INFOPLIST_KEY_NSMotionUsageDescription = "咕咕骑车使用运动与健身数据提升骑行速度的计算精度。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = "location processing";
+				INFOPLIST_KEY_UIBackgroundModes = "location audio";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -291,7 +291,7 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "咕咕骑车使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。";
 				INFOPLIST_KEY_NSMotionUsageDescription = "咕咕骑车使用运动与健身数据提升骑行速度的计算精度。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = "location processing";
+				INFOPLIST_KEY_UIBackgroundModes = "location audio";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -35,14 +35,14 @@ targets:
         INFOPLIST_KEY_NSHealthShareUsageDescription: 咕咕骑车读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: 咕咕骑车将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。
         INFOPLIST_KEY_NSMotionUsageDescription: 咕咕骑车使用运动与健身数据提升骑行速度的计算精度。
-        INFOPLIST_KEY_UIBackgroundModes: location processing
+        INFOPLIST_KEY_UIBackgroundModes: location audio
         SUPPORTS_MACCATALYST: NO
     info:
       path: Info.plist
       properties:
         UIBackgroundModes:
           - location
-          - processing
+          - audio
         CFBundleDisplayName: 咕咕骑车
         UILaunchScreen:
           UIColorName: LaunchBackground

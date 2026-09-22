@@ -15,7 +15,9 @@ final class LocationRecorder: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.activityType = .fitness          // 骑行优化
         manager.pausesLocationUpdatesAutomatically = false
-        manager.allowsBackgroundLocationUpdates = false // MVP 阶段前台使用；后台权限随 v0.2 打开
+        // 锁屏/切后台继续记录：when-in-use 授权 + 后台定位模式，系统要求同时显示蓝色指示条
+        manager.allowsBackgroundLocationUpdates = true
+        manager.showsBackgroundLocationIndicator = true
     }
 
     func requestPermission() {
