@@ -80,13 +80,24 @@ struct RideView: View {
                     .foregroundStyle(.gray)
             }
 
-            // 距离 + 心率：两块大字
+            // 距离 + 心率：两块大字；点心率可提示如何连接
             HStack(spacing: 0) {
                 bigMetric(value: String(format: "%.2f", engine.state.distanceKm), unit: "距离 KM")
                 Rectangle().fill(Color(white: 0.14)).frame(width: 1, height: 64)
                 bigMetric(value: engine.state.heartRate.map { "\(Int($0))" } ?? "—", unit: "心率 BPM")
+                    .onTapGesture { showHRHint = true }
             }
             .padding(.top, 20)
+            .alert("想看实时心率？", isPresented: $showHRHint) {
+                Button("打开体能训练") {
+                    if let url = URL(string: "x-apple-fitness://") {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("知道了", role: .cancel) {}
+            } message: {
+                Text("iPhone 没有心率传感器。在手表上开个体能训练，心率会经苹果健康实时显示在这里。")
+            }
 
             Spacer(minLength: 0)
 

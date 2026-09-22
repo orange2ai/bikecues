@@ -46,8 +46,24 @@ final class RideEngine: ObservableObject {
             guard self.hk.isAvailable else { return }
             self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
                 Task { @MainActor in
-                    guard let self, Date().timeIntervalSince(endDate) < 90 else { return }
+                    guard let self, Date().timeIntervalSince(endDate) < 12 else { return }
                     self.absorbHeartRate(bpm, source: .healthKit)
+                }
+            }
+            self.startHRWatchdog()
+        }
+    }
+
+    /// 心率看门狗：15 秒没有新样本，视为手表已停/已关，回落“未连接”
+    private func startHRWatchdog() {
+        hrWatchdog?.invalidate()
+        hrWatchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            Task { @MainActor in
+                guard let self else { return }
+                guard let last = self.lastHRDate else { return }
+                if Date().timeIntervalSince(last) > 15, self.state.heartRateSource != .none {
+                    self.state.heartRate = nil
+                    self.state.heartRateSource = .none
                 }
             }
         }
@@ -259,6 +275,7 @@ final class RideEngine: ObservableObject {
     private var lastLocation: CLLocation?
 
     func absorbHeartRate(_ bpm: Double, source: HeartRateSource) {
+        lastHRDate = Date()
         state.heartRate = bpm
         state.heartRateSource = source
         guard phase == .riding else { return }
