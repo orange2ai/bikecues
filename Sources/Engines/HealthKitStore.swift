@@ -37,7 +37,7 @@ final class HealthKitStore {
     /// 用户拒绝了健康读取权限（授权弹窗点了“不允许”）
     func heartRateAuthDenied() -> Bool {
         guard isAvailable else { return false }
-        return store.authorizationStatus(for: HKQuantityType(.heartRate)) == .denied
+        return store.authorizationStatus(for: HKQuantityType(.heartRate)) == .sharingDenied
     }
 
     func requestAuthorization() async throws {
