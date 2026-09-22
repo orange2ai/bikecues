@@ -39,6 +39,18 @@ final class RideEngine: ObservableObject {
         recorder.onLocation = { [weak self] loc in
             self?.absorb(location: loc)
         }
+        // App 启动即挂载心率监听：手表在练，设置页随时能看到"已连接"
+        Task { @MainActor in
+            try? await hk.requestAuthorization()
+            self.healthAuthorized = self.hk.isAvailable
+            guard self.hk.isAvailable else { return }
+            self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
+                Task { @MainActor in
+                    guard let self, Date().timeIntervalSince(endDate) < 90 else { return }
+                    self.absorbHeartRate(bpm, source: .healthKit)
+                }
+            }
+        }
     }
 
     // MARK: - 生命周期
@@ -121,7 +133,6 @@ final class RideEngine: ObservableObject {
         guard phase != .idle else { return }
         let end = Date()
         recorder.stop()
-        hk.stopLiveHeartRateObservation()
         let start = startDate ?? end.addingTimeInterval(-max(state.elapsed, 1))
         CueSpeaker.shared.deactivateSession()
         stopTicker()
@@ -248,10 +259,9 @@ final class RideEngine: ObservableObject {
     private var lastLocation: CLLocation?
 
     func absorbHeartRate(_ bpm: Double, source: HeartRateSource) {
-        guard phase == .riding else { return }
         state.heartRate = bpm
         state.heartRateSource = source
-        hk.addHeartRateSample(bpm: bpm, at: Date())
+        guard phase == .riding else { return }
         hrSegSum += bpm
         hrSegCount += 1
     }
