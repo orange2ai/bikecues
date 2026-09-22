@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 import HealthKit
 
 /// HealthKit 读写：训练写入 + 心率读取（延迟兜底）+ 历史查询
