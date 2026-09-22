@@ -6,16 +6,6 @@ struct RideView: View {
     @State private var showStartDialog = false
     @State private var deepLinkFailed = false
 
-    // GO 弹窗的状态文案：把心率这件事一次说清楚
-    private var startDialogMessage: String {
-        if engine.hrAuthDenied {
-            return "健康读取权限没开：系统设置 > 隐私与安全 > 健康 > 咕咕骑车，打开后心率才能进来。"
-        }
-        if engine.state.heartRateSource == .healthKit {
-            return "心率已连接。现在开始，咕咕实时播报。"
-        }
-        return "心率未连接：打开手表体能训练后会自动连上，不用等，直接骑也行。"
-    }
 
     var body: some View {
         Group {
@@ -45,7 +35,13 @@ struct RideView: View {
 
             Spacer()
 
-            Button(action: { showStartDialog = true }) {
+            Button(action: {
+                if engine.state.heartRateSource == .healthKit {
+                    engine.startRide()
+                } else {
+                    showStartDialog = true
+                }
+            }) {
                 Text("GO")
                     .font(.system(size: 46, weight: .heavy))
                     .foregroundStyle(.black)
@@ -54,9 +50,9 @@ struct RideView: View {
                     .shadow(color: .orange.opacity(0.25), radius: 30)
             }
             .frame(maxWidth: .infinity)
-            .confirmationDialog("准备出发", isPresented: $showStartDialog,
+            .confirmationDialog("心率未连接", isPresented: $showStartDialog,
                                 titleVisibility: .visible) {
-                Button("打开体能训练（记心率）") {
+                Button("在手表上打开体能训练") {
                     if let url = URL(string: "x-apple-fitness://") {
                         UIApplication.shared.open(url) { ok in
                             if !ok { deepLinkFailed = true }
@@ -65,12 +61,12 @@ struct RideView: View {
                         deepLinkFailed = true
                     }
                 }
-                Button("开始骑行") {
+                Button("不用心率，直接开始") {
                     engine.startRide()
                 }
                 Button("取消", role: .cancel) {}
             } message: {
-                Text(startDialogMessage)
+                Text("在手表上打开体能训练，心率会自动连上并实时播报。也可以不记心率直接骑。")
             }
             .alert("没打开成功，请手动打开健身 App，选“户外骑行”。", isPresented: $deepLinkFailed) {
                 Button("好", role: .cancel) {}
