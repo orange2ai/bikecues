@@ -14,6 +14,7 @@ final class RideEngine: ObservableObject {
     @Published var cues: [CueEvent] = []
     @Published var settings: CueSettings = CueSettings.load()
     @Published var healthAuthorized = false
+    @Published var hrAuthDenied = false
 
     enum Phase { case idle, riding, paused }
 
@@ -46,7 +47,8 @@ final class RideEngine: ObservableObject {
         Task { @MainActor in
             try? await hk.requestAuthorization()
             self.healthAuthorized = self.hk.isAvailable
-            guard self.hk.isAvailable else { return }
+            self.hrAuthDenied = self.hk.heartRateAuthDenied()
+            guard self.hk.isAvailable, !self.hrAuthDenied else { return }
             self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
                 Task { @MainActor in
                     guard let self, Date().timeIntervalSince(endDate) < 12 else { return }

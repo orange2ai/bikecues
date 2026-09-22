@@ -3,6 +3,19 @@ import SwiftUI
 struct RideView: View {
     @EnvironmentObject var engine: RideEngine
     @State private var showHRHint = false
+    @State private var showStartDialog = false
+    @State private var deepLinkFailed = false
+
+    // GO 弹窗的状态文案：把心率这件事一次说清楚
+    private var startDialogMessage: String {
+        if engine.hrAuthDenied {
+            return "健康读取权限没开：系统设置 > 隐私与安全 > 健康 > 咕咕骑车，打开后心率才能进来。"
+        }
+        if engine.state.heartRateSource == .healthKit {
+            return "心率已连接。现在开始，咕咕实时播报。"
+        }
+        return "心率未连接：打开手表体能训练后会自动连上，不用等，直接骑也行。"
+    }
 
     var body: some View {
         Group {
@@ -32,7 +45,7 @@ struct RideView: View {
 
             Spacer()
 
-            Button(action: { engine.startRide() }) {
+            Button(action: { showStartDialog = true }) {
                 Text("GO")
                     .font(.system(size: 46, weight: .heavy))
                     .foregroundStyle(.black)
@@ -41,25 +54,25 @@ struct RideView: View {
                     .shadow(color: .orange.opacity(0.25), radius: 30)
             }
             .frame(maxWidth: .infinity)
-
-            // GO 之前就能看到心率设备是否在线（手表体能训练在跑即亮）
-            Button {
-                showHRHint = true
-            } label: {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(engine.state.heartRateSource == .healthKit ? Color.green : Color(white: 0.3))
-                        .frame(width: 7, height: 7)
-                    Text(engine.state.heartRateSource == .healthKit ? "心率已连接" : "心率未连接")
-                        .font(.footnote)
+            .confirmationDialog("准备出发", isPresented: $showStartDialog,
+                                titleVisibility: .visible) {
+                Button("打开体能训练（记心率）") {
+                    let opened = URL(string: "x-apple-fitness://").flatMap { UIApplication.shared.open($0) }
+                    if opened != true { deepLinkFailed = true }
                 }
-                .foregroundStyle(Color(white: 0.55))
-                .padding(.vertical, 6)
-                .padding(.horizontal, 14)
-                .background(Color(white: 0.08))
-                .clipShape(Capsule())
+                Button("我已打开，开始骑行") {
+                    engine.startRide()
+                }
+                Button("直接骑行，不用心率") {
+                    engine.startRide()
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text(startDialogMessage)
             }
-            .padding(.top, 28)
+            .alert("没打开成功，请手动打开健身 App，选“户外骑行”。", isPresented: $deepLinkFailed) {
+                Button("好", role: .cancel) {}
+            }
 
             Spacer()
         }

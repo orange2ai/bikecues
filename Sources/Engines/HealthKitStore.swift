@@ -34,6 +34,12 @@ final class HealthKitStore {
 
     var isAvailable: Bool { entitled && HKHealthStore.isHealthDataAvailable() }
 
+    /// 用户拒绝了健康读取权限（授权弹窗点了“不允许”）
+    func heartRateAuthDenied() -> Bool {
+        guard isAvailable else { return false }
+        return store.authorizationStatus(for: HKQuantityType(.heartRate)) == .denied
+    }
+
     func requestAuthorization() async throws {
         guard isAvailable else { return }
         let toShare: Set<HKSampleType> = [
