@@ -154,6 +154,7 @@ struct LogView: View {
         let avgHR = hr.isEmpty ? nil : hr.map { $0.1 }.reduce(0, +) / Double(hr.count)
         let maxHR = hr.map { $0.1 }.max()
         let elevGain: Double = {
+            guard route.count > 1 else { return 0 }
             var gain = 0.0
             for i in 1..<route.count {
                 let d = route[i].altitude - route[i-1].altitude
