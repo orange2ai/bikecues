@@ -255,7 +255,7 @@ final class RideEngine: ObservableObject {
             "- 心率源: \(state.heartRateSource.rawValue)\(hrStr)",
             "- 播报记录: \(cues.count) 条",
             "",
-            "> 由 骑码 bikecues 导出 · 供人阅读，也供 agent 分析",
+            "> 由 咕咕骑行 Coucou Bike 导出 · 供人阅读，也供 agent 分析",
         ]
         for c in cues.reversed() {
             let f = DateFormatter(); f.dateFormat = "HH:mm:ss"

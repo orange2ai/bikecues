@@ -17,10 +17,10 @@ struct RideView: View {
     private var idleView: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("骑码")
-                    .font(.system(size: 84, weight: .bold))
+                Text("咕咕骑行")
+                    .font(.system(size: 68, weight: .bold))
                     .tracking(2)
-                Text("BIKECUES")
+                Text("COUCOU BIKE")
                     .font(.system(size: 20, weight: .semibold))
                     .tracking(8)
                     .foregroundStyle(Color.orange)
