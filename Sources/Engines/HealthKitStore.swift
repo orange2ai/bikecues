@@ -221,8 +221,8 @@ final class HealthKitStore {
         hrAnchor = nil
     }
 
-    /// 查询最近 N 秒内的心率样本（低频兜底）
-    func latestHeartRate(within seconds: TimeInterval = 30) async -> Double? {
+    /// 查询最近 N 秒内的心率样本，返回 (样本时间, bpm)；过期样本坚决不冒充实时
+    func latestHeartRate(within seconds: TimeInterval = 12) async -> (Date, Double)? {
         guard isAvailable else { return nil }
         let type = HKQuantityType(.heartRate)
         let unit = HKUnit.count().unitDivided(by: .minute())
@@ -230,7 +230,7 @@ final class HealthKitStore {
         return await withCheckedContinuation { cont in
             let q = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]) { _, samples, _ in
                 guard let s = samples?.first as? HKQuantitySample else { cont.resume(returning: nil); return }
-                cont.resume(returning: s.quantity.doubleValue(for: unit))
+                cont.resume(returning: (s.endDate, s.quantity.doubleValue(for: unit)))
             }
             store.execute(q)
         }

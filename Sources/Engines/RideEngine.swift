@@ -53,7 +53,7 @@ final class RideEngine: ObservableObject {
             self.hk.startLiveHeartRateObservation { [weak self] bpm, endDate in
                 Task { @MainActor in
                     guard let self, Date().timeIntervalSince(endDate) < 12 else { return }
-                    self.absorbHeartRate(bpm, source: .healthKit)
+                    self.absorbHeartRate(bpm, source: .healthKit, at: endDate)
                 }
             }
             self.startHRWatchdog()
@@ -71,15 +71,15 @@ final class RideEngine: ObservableObject {
                     self.state.heartRate = nil
                     self.state.heartRateSource = .none
                 }
-                // 断连期间每 5 秒主动捞一次最近样本：中途开手表也能快速连上
+                // 断连期间每 5 秒主动捞一次：中途开手表也能快速连上；12 秒窗口，过期样本绝不冒充实时
                 if self.state.heartRateSource == .none, !self.hrAuthDenied,
                    self.lastHRDate == nil || Date().timeIntervalSince(self.lastHRDate!) > 15,
                    self.lastHRPoll == nil || Date().timeIntervalSince(self.lastHRPoll!) > 5 {
                     self.lastHRPoll = Date()
                     Task { [weak self] in
-                        let hr = await HealthKitStore.shared.latestHeartRate(within: 90)
-                        guard let self, let hr else { return }
-                        self.absorbHeartRate(hr, source: .healthKit)
+                        guard let (date, hr) = await HealthKitStore.shared.latestHeartRate(within: 12) else { return }
+                        guard let self else { return }
+                        self.absorbHeartRate(hr, source: .healthKit, at: date)
                     }
                 }
             }
@@ -248,9 +248,9 @@ final class RideEngine: ObservableObject {
         // 心率兜底源：定时从 HealthKit 捞最新心率（仅在实时观察未生效时使用）
         if state.heartRateSource == .none {
             Task { [weak self] in
-                let hr = await HealthKitStore.shared.latestHeartRate(within: 90)
-                guard let self, let hr else { return }
-                self.absorbHeartRate(hr, source: .healthKit)
+                guard let (date, hr) = await HealthKitStore.shared.latestHeartRate(within: 12) else { return }
+                guard let self else { return }
+                self.absorbHeartRate(hr, source: .healthKit, at: date)
             }
         }
 
@@ -288,8 +288,8 @@ final class RideEngine: ObservableObject {
 
     private var lastLocation: CLLocation?
 
-    func absorbHeartRate(_ bpm: Double, source: HeartRateSource) {
-        lastHRDate = Date()
+    func absorbHeartRate(_ bpm: Double, source: HeartRateSource, at date: Date = Date()) {
+        lastHRDate = date
         state.heartRate = bpm
         state.heartRateSource = source
         guard phase == .riding else { return }
