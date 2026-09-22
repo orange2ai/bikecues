@@ -31,10 +31,10 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: 布谷骑行
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: 骑码使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。
-        INFOPLIST_KEY_NSHealthShareUsageDescription: 骑码读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。
-        INFOPLIST_KEY_NSHealthUpdateUsageDescription: 骑码将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。
-        INFOPLIST_KEY_NSMotionUsageDescription: 骑码使用运动与健身数据提升骑行速度的计算精度。
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: 布谷骑行使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。
+        INFOPLIST_KEY_NSHealthShareUsageDescription: 布谷骑行读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: 布谷骑行将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。
+        INFOPLIST_KEY_NSMotionUsageDescription: 布谷骑行使用运动与健身数据提升骑行速度的计算精度。
         INFOPLIST_KEY_UIBackgroundModes: location processing
         SUPPORTS_MACCATALYST: NO
     info:

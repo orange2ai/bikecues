@@ -19,7 +19,7 @@ struct SettingsView: View {
                         row("AirPods Pro 3 / 心率带", sub: "标准蓝牙心率源，实时", value: engine.state.heartRateSource == .bluetooth ? "已连接" : "未连接", on: engine.state.heartRateSource == .bluetooth)
                     }
 
-                    section("骑码的原则") {
+                    section("布谷骑行的原则") {
                         principle("01", "省电", "骑行是长时间运动。OLED 纯黑即熄灭，骑行页永远 100% 黑底，不需要变暗的花招。")
                         principle("02", "原生", "和苹果系统深度打通，记录按最兼容的方式写入苹果健康，也读取系统记录。不导流，不另建孤岛。")
                         principle("03", "数据永不丢失", "本地优先，健康兜底，iCloud 同步，Markdown 导出。你的数据属于你，也随时可以离开。")
