@@ -144,9 +144,12 @@ final class HealthKitStore {
         guard let route = routes.first else { return [] }
         return await withCheckedContinuation { cont in
             var acc: [CLLocation] = []
+            let once = ResumeOnce()
             let q = HKWorkoutRouteQuery(route: route) { _, locations, done, error in
                 acc.append(contentsOf: locations ?? [])
-                if done || error != nil { cont.resume(returning: acc) }
+                if done || error != nil {
+                    once.run { cont.resume(returning: acc) }
+                }
             }
             store.execute(q)
         }
