@@ -43,6 +43,9 @@ final class RideEngine: ObservableObject {
     private var locNudgeShown = false
     private var lastAccuracy: Double = 0
     private var lastSystemSpeed: Double = 0
+    private var firstFix: CLLocation?
+    private var lastKnownLocation: CLLocation?
+    private var gpsNudgeShown = false
     private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
 
@@ -181,6 +184,8 @@ final class RideEngine: ObservableObject {
         locationStatus = recorder.authorizationStatus
         locationFixCount = 0
         locNudgeShown = false
+        gpsNudgeShown = false
+        firstFix = nil
         rideLog("startRide: location auth=\(Self.describe(recorder.authorizationStatus))")
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
         cue("已开始记录，咕咕陪你出发", kind: .lifecycle)
@@ -341,9 +346,25 @@ final class RideEngine: ObservableObject {
             }
         }
 
-        // 每 30 秒写一次骑行诊断
+        // 每 30 秒写一次骑行诊断（moved = 相对首点位移，能直接看出位置是否被钉死）
         if Int(state.elapsed) % 30 == 0 {
-            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(String(format: "%.1f", state.speedKmh)) acc=\(Int(lastAccuracy))m sysSpeed=\(String(format: "%.1f", lastSystemSpeed)) hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
+            let moved = (firstFix.map { first -> Double in
+                guard let last = lastKnownLocation else { return 0 }
+                return first.distance(from: last)
+            }) ?? 0
+            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(String(format: "%.1f", state.speedKmh)) acc=\(Int(lastAccuracy))m sysSpeed=\(String(format: "%.1f", lastSystemSpeed)) moved=\(Int(moved))m hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
+        }
+
+        // 60 秒了位置几乎没挪：不是没权限，是 GPS 被挡了（室内 Wi-Fi 定位感知不到米级移动）
+        if !gpsNudgeShown, state.elapsed > 60, locationFixCount > 5,
+           state.distanceKm < 0.02,
+           (firstFix.map { first -> Bool in
+                guard let last = lastKnownLocation else { return false }
+                return first.distance(from: last) < 20
+            }) ?? false {
+            gpsNudgeShown = true
+            rideLog("gps weak: moved<20m after 60s, likely indoors")
+            cue("GPS 信号很弱，咕咕可能被墙挡住了。到空旷处或窗边试试", kind: .lifecycle)
         }
 
         // 骑行 30 秒仍无心率：主动说一次，别让用户对着“—”发呆
@@ -374,6 +395,8 @@ final class RideEngine: ObservableObject {
         locationFixCount += 1
         lastAccuracy = location.horizontalAccuracy
         lastSystemSpeed = location.speed
+        lastKnownLocation = location
+        if firstFix == nil { firstFix = location }
         if locationFixCount == 1 {
             rideLog("first fix: \(String(format: "%.5f,%.5f", location.coordinate.latitude, location.coordinate.longitude)) acc=\(Int(location.horizontalAccuracy))m sysSpeed=\(String(format: "%.2f", location.speed)) sysAcc=\(String(format: "%.2f", location.speedAccuracy))")
         }
