@@ -74,43 +74,45 @@ struct RideLiveActivityWidget: Widget {
     }
 }
 
-/// 锁屏卡片：黑底 OLED，速度为主角
+/// 锁屏卡片：紧凑三列，系统给锁屏实时活动的高度有限，铺太满会被压缩错乱
 struct LockScreenRideView: View {
     let state: RideActivityAttributes.ContentState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(state.paused ? "已暂停" : "骑行中", systemImage: "figure.outdoor.cycle")
-                .font(.subheadline).fontWeight(.semibold)
-                .foregroundStyle(state.paused ? Color.yellow : Color.orange)
+        VStack(spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "figure.outdoor.cycle")
+                    .foregroundStyle(state.paused ? Color.yellow : Color.orange)
+                Text(state.paused ? "已暂停" : "骑行中")
+                    .foregroundStyle(state.paused ? Color.yellow : Color.white)
+                Spacer()
+                if let hr = state.heartRate {
+                    Label("\(Int(hr))", systemImage: "heart.fill")
+                        .foregroundStyle(.red)
+                }
+            }
+            .font(.footnote).fontWeight(.semibold)
+            .monospacedDigit()
 
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("\(state.speedKmh, specifier: "%.1f")")
-                        .font(.system(size: 46, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(Color.orange)
-                    Text("km/h")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
+                metric(String(format: "%.1f", state.speedKmh), unit: "km/h", color: .orange)
                 Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(state.distanceKm, specifier: "%.2f") km")
-                        .font(.system(size: 26, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                    Text(RideLiveActivityWidget.timeString(state.elapsed))
-                        .font(.caption).monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if let hr = state.heartRate {
-                Label("\(Int(hr)) bpm", systemImage: "heart.fill")
-                    .font(.subheadline).fontWeight(.semibold)
-                    .foregroundStyle(.red)
-                    .monospacedDigit()
+                metric(String(format: "%.2f", state.distanceKm), unit: "公里", color: .white)
+                Spacer()
+                metric(RideLiveActivityWidget.timeString(state.elapsed), unit: "用时", color: .white)
             }
         }
-        .padding()
+    }
+
+    private func metric(_ value: String, unit: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value)
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(color)
+            Text(unit)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
     }
 }

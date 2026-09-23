@@ -299,15 +299,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = bikecues.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "咕咕骑车";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "咕咕骑车读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "咕咕骑车将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "咕咕骑车使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。";
-				INFOPLIST_KEY_NSMotionUsageDescription = "咕咕骑车使用运动与健身数据提升骑行速度的计算精度。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = "location audio";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -418,15 +411,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = bikecues.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "咕咕骑车";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "咕咕骑车读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "咕咕骑车将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "咕咕骑车使用定位获取骑行速度、距离和轨迹，仅用于你的骑行记录。";
-				INFOPLIST_KEY_NSMotionUsageDescription = "咕咕骑车使用运动与健身数据提升骑行速度的计算精度。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = "location audio";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
