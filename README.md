@@ -33,19 +33,14 @@
 - [ ] 数据出口：Markdown 全量导出（供人阅读，也供 agent 分析）
 - [ ] AI 骑行分析（Coucou Pro）
 
-## 开发流程：冒烟测试（必须）
+## 开发流程：冒烟测试与发版关卡
 
-运动软件要求严谨。任何改动在 `git push` 之前必须过一遍冒烟测试（已接 pre-push 钩子自动执行）：
+运动软件要求严谨。测试分两档：
 
-```bash
-./scripts/smoke.sh
-```
+- **日常开发**：`./scripts/smoke.sh`，改动涉及时，随时跑，不拦推送（跑完约 2 分钟）
+- **正式发版（强制）**：`./scripts/release.sh`，全量冒烟 + 真机编译装机 + 人工实测清单，逐项打勾后才能提审/发布
 
-覆盖：工程重新生成 → 模拟器全量编译 → 单元测试（Info.plist 完整性 / appex NSExtension / 卡尔曼测速与静止归零 / 实时活动编码 / 旧存档解码）→ 装机产物检查 → 模拟器安装启动 → 真实骑行生命周期（开骑 → 自动结束 → 结算页，全程进程存活）。
-
-紧急跳过：`COUCOU_SKIP_SMOKE=1 git push`，原因必须写进提交信息。
-
-新克隆仓库后记得启用钩子：`git config core.hooksPath scripts/git-hooks`
+重要测试 case 统一登记在 [SMOKE.md](SMOKE.md)（每条对应一次真实事故），事故复盘后先补 case 再修车。
 
 ## License
 

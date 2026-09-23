@@ -1,7 +1,6 @@
 #!/bin/bash
-# pre-push 钩子：推送前强制跑冒烟测试
-# 启用：git config core.hooksPath scripts/git-hooks
-# 紧急跳过：COUCOU_SKIP_SMOKE=1 git push（原因必须写进提交信息）
+# pre-push 钩子（可选）：日常推送默认不启用，改由 scripts/release.sh 在发版时强制跑冒烟
+# 如需恢复推送拦截：git config core.hooksPath scripts/git-hooks
 if [ "${COUCOU_SKIP_SMOKE:-0}" = "1" ]; then
   echo "[pre-push] COUCOU_SKIP_SMOKE=1，跳过冒烟测试（紧急通道，原因需写入提交信息）"
   exit 0

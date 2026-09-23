@@ -1,0 +1,41 @@
+# 冒烟测试 Case 台账
+
+每一条 case 对应一次真实事故或一颗雷。新增重要测试时在这里登记；动到相关代码时，先看这里。
+
+运行方式：`./scripts/smoke.sh`（日常）/ `./scripts/release.sh`（正式发版，强制）
+
+## 工程完整性（每条都流过血）
+
+| # | Case | 防的是什么 | 加入日期 |
+|---|------|-----------|---------|
+| 1 | App Info.plist 必须含 `UIBackgroundModes: [location, audio]` | 2026-09-23 GO 倒数完闪退：xcodegen 生成模式吞掉自定义 plist，后台定位声明丢失，`allowsBackgroundLocationUpdates` 一设即崩 | 2026-09-23 |
+| 2 | App Info.plist 必须含 `NSSupportsLiveActivities`、`UILaunchScreen`、四个权限文案 | 同上事故连带：实时活动不显示、杀 App 白屏回归 | 2026-09-23 |
+| 3 | coucouWidgets.appex 必须嵌入主 App 且 Info.plist 带 `NSExtension.NSExtensionPointIdentifier = com.apple.widgetkit-extension` | 2026-09-23 装机失败：appex 缺 NSExtension 字典，devicectl 报错 3002 | 2026-09-23 |
+
+## 核心算法
+
+| # | Case | 防的是什么 | 加入日期 |
+|---|------|-----------|---------|
+| 4 | 卡尔曼恒速 5m/s×30s 收敛到 18km/h±4，距离 145m±30 | 速度/距离算法回归（速度恒 0 事故的算法层防线）；断言边界用真机同款 Swift 代码逐点标定，勿用脚本复刻值 | 2026-09-23 |
+| 5 | 静止（±0.3m 噪声）速度必须为 0、距离不得虚增 | 假速度/鬼里程；静止 5 分钟漂移事故的回归防线 | 2026-09-23 |
+
+## 数据与兼容
+
+| # | Case | 防的是什么 | 加入日期 |
+|---|------|-----------|---------|
+| 6 | 实时活动 ContentState JSON 编解码 round-trip | ActivityAttributes 结构改动破坏 App↔扩展契约 | 2026-09-23 |
+| 7 | CueSettings 旧存档（缺新字段）解码取默认值 | 设置加字段后老用户整体解码失败回默认 | 2026-09-23 |
+
+## 流程级（smoke.sh 里的步骤）
+
+| # | 步骤 | 防的是什么 | 加入日期 |
+|---|------|-----------|---------|
+| 8 | xcodegen generate 每次先跑 | 改了 project.yml 忘了 regenerate，新文件没进工程 | 2026-09-23 |
+| 9 | 模拟器安装 + 启动后进程存活检查 | 启动闪退类回归（预热/后台拉起场景仍需真机观察） | 2026-09-23 |
+| 10 | -autoRide/-autoEnd 骑行生命周期 78 秒进程存活 | GO/结束/结算页链路闪退 | 2026-09-23 |
+
+## 维护规则
+
+- 每次事故复盘后：修 bug 的同时在这里登记对应 case，并写进 SmokeTests.swift 或 smoke.sh
+- 断言边界必须实测标定（用真代码、真数据），禁止拍脑袋写宽松到永远通过的断言
+- Case 失效（需求变更导致）不删除，标注"已失效 + 原因"，留追溯
