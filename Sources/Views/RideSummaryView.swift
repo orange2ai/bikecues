@@ -101,54 +101,61 @@ struct RideSummaryView: View {
     }
 }
 
-/// 撒花：出现时从顶部飘落一次，不拦截触摸
+/// 撒花：结束时立刻飘落，自由落体 + 左右摇摆，尾段淡出，保证完全消失不残留
 struct ConfettiView: View {
     private struct Piece: Identifiable {
         let id: Int
-        let x: CGFloat          // 水平起点 0...1
+        let x0: CGFloat         // 水平起点 0...1
         let delay: Double
         let duration: Double
         let size: CGFloat
         let color: Color
         let spin: Double        // 总旋转角
-        let drift: CGFloat      // 水平漂移
+        let sway: CGFloat       // 左右摆幅
+        let swayFreq: Double    // 摆动次数
         let round: Bool         // 圆片或纸屑
     }
 
-    private let pieces: [Piece] = (0..<90).map { i in
+    private let pieces: [Piece] = (0..<110).map { i in
         Piece(
             id: i,
-            x: .random(in: 0...1),
-            delay: .random(in: 0...1.4),
-            duration: .random(in: 2.6...4.6),
+            x0: .random(in: 0...1),
+            delay: .random(in: 0...0.5),
+            duration: .random(in: 2.2...4.0),
             size: .random(in: 6...12),
             color: [Color.orange, Color.orange, Color.yellow, Color.white, Color(white: 0.5)].randomElement()!,
             spin: .random(in: 240...760) * (Bool.random() ? 1 : -1),
-            drift: .random(in: -70...70),
+            sway: .random(in: 18...55),
+            swayFreq: .random(in: 1...2.5),
             round: Bool.random()
         )
     }
 
-    @State private var fall = false
+    private let startedAt = Date()
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSince(startedAt)
+            GeometryReader { geo in
+                let total = geo.size.height + 120
                 ForEach(pieces) { p in
-                    shape(p)
-                        .frame(width: p.size, height: p.round ? p.size : p.size * 0.55)
-                        .position(
-                            x: p.x * geo.size.width + (fall ? p.drift : 0),
-                            y: fall ? geo.size.height + 60 : -40
-                        )
-                        .rotationEffect(.degrees(fall ? p.spin : 0))
-                        .opacity(fall ? 0.9 : 1)
-                        .animation(.linear(duration: p.duration).delay(p.delay), value: fall)
+                    let raw = (t - p.delay) / p.duration
+                    if raw > 0, raw < 1 {
+                        // 平方递进 = 重力加速感
+                        let prog = raw * raw
+                        shape(p)
+                            .frame(width: p.size, height: p.round ? p.size : p.size * 0.55)
+                            .position(
+                                x: p.x0 * geo.size.width + sin(raw * .pi * p.swayFreq * 2) * p.sway,
+                                y: -60 + total * prog
+                            )
+                            .rotationEffect(.degrees(p.spin * raw))
+                            .opacity(raw > 0.85 ? (1 - raw) / 0.15 : 1)
+                    }
                 }
             }
         }
         .allowsHitTesting(false)
-        .onAppear { fall = true }
     }
 
     @ViewBuilder
