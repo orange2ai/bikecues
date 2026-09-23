@@ -3,8 +3,6 @@ import SwiftUI
 struct RideView: View {
     @EnvironmentObject var engine: RideEngine
     @State private var showHRHint = false
-    @State private var showStartDialog = false
-    @State private var deepLinkFailed = false
 
 
     var body: some View {
@@ -35,13 +33,7 @@ struct RideView: View {
 
             Spacer()
 
-            Button(action: {
-                if engine.state.heartRateSource == .healthKit {
-                    engine.startRide()
-                } else {
-                    showStartDialog = true
-                }
-            }) {
+            Button(action: { engine.startRide() }) {
                 Text("GO")
                     .font(.system(size: 46, weight: .heavy))
                     .foregroundStyle(.black)
@@ -50,29 +42,6 @@ struct RideView: View {
                     .shadow(color: .orange.opacity(0.25), radius: 30)
             }
             .frame(maxWidth: .infinity)
-            .confirmationDialog("心率未连接", isPresented: $showStartDialog,
-                                titleVisibility: .visible) {
-                Button("在手表上打开体能训练") {
-                    if let url = URL(string: "x-apple-fitness://") {
-                        UIApplication.shared.open(url) { ok in
-                            if !ok { deepLinkFailed = true }
-                        }
-                    } else {
-                        deepLinkFailed = true
-                    }
-                }
-                Button("不用心率，直接开始") {
-                    engine.startRide()
-                }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text(engine.hrAuthDenied
-                     ? "健康读取权限没开：系统设置 > 隐私与安全 > 健康 > 咕咕骑车。"
-                     : "在手表上打开体能训练，心率会自动连上并实时播报。也可以不记心率直接骑。")
-            }
-            .alert("没打开成功，请手动打开健身 App，选“户外骑行”。", isPresented: $deepLinkFailed) {
-                Button("好", role: .cancel) {}
-            }
 
             // 心率状态：固定高度，出现/消失不挤动布局
             VStack(spacing: 6) {
