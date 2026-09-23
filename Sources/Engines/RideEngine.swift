@@ -15,6 +15,8 @@ final class RideEngine: ObservableObject {
     @Published var settings: CueSettings = CueSettings.load()
     @Published var healthAuthorized = false
     @Published var hrAuthDenied = false
+    @Published var locationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var locationFixCount = 0
 
     enum Phase { case idle, riding, paused }
 
@@ -38,13 +40,25 @@ final class RideEngine: ObservableObject {
     // 最后一次收到心率样本的时间：过期回落“未连接”
     private var lastHRDate: Date?
     private var hrNudgeShown = false
+    private var locNudgeShown = false
     private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
 
     private init() {
-        recorder.onLocation = { [weak self] loc in
-            self?.absorb(location: loc)
+        recorder.onLocation = { [weak self] loc, kmh in
+            self?.absorb(location: loc, speedKmh: kmh)
         }
+        recorder.onAuthorizationChange = { [weak self] status in
+            Task { @MainActor in
+                guard let self else { return }
+                self.locationStatus = status
+                self.rideLog("location auth -> \(Self.describe(status))")
+                if status == .denied || status == .restricted {
+                    self.cue("定位权限被拒绝了，咕咕没法记录骑行。去系统设置里打开定位权限", kind: .lifecycle)
+                }
+            }
+        }
+        locationStatus = recorder.authorizationStatus
         // App 启动即挂载心率监听：手表在练，设置页随时能看到"已连接"
         Task { @MainActor in
             try? await hk.requestAuthorization()
@@ -59,6 +73,45 @@ final class RideEngine: ObservableObject {
                 }
             }
             self.startHRWatchdog()
+        }
+    }
+
+    static func describe(_ s: CLAuthorizationStatus) -> String {
+        switch s {
+        case .notDetermined: return "未请求"
+        case .restricted: return "受限"
+        case .denied: return "被拒绝"
+        case .authorizedWhenInUse: return "使用期间"
+        case .authorizedAlways: return "始终"
+        @unknown default: return "未知"
+        }
+    }
+
+    /// 骑行链路诊断日志（定位/心率/距离）
+    private func rideLog(_ line: String) {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss.SSS"
+        let text = "[\(f.string(from: Date()))] \(line)\n"
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appending(path: "ride_debug.log")
+        if let handle = try? FileHandle(forWritingTo: url) {
+            try? handle.seekToEnd()
+            handle.write(text.data(using: .utf8)!)
+            try? handle.close()
+        } else {
+            try? text.write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+
+    /// 手动请求定位权限（设置页用）
+    func requestLocationPermission() {
+        recorder.requestPermission()
+    }
+
+    /// 打开系统里本 App 的设置页（权限被拒后引导用户）
+    func openSystemSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 
@@ -121,7 +174,12 @@ final class RideEngine: ObservableObject {
         hrNudgeShown = false
         cues.removeAll()
 
+        recorder.requestPermission()   // 必须显式请求，否则系统不弹框、定位收不到点
         recorder.start()
+        locationStatus = recorder.authorizationStatus
+        locationFixCount = 0
+        locNudgeShown = false
+        rideLog("startRide: location auth=\(Self.describe(recorder.authorizationStatus))")
         CueSpeaker.shared.activateSession(mixWithOthers: settings.mixWithAudio)
         cue("已开始记录，咕咕陪你出发", kind: .lifecycle)
 
@@ -269,6 +327,23 @@ final class RideEngine: ObservableObject {
         }
         #endif
 
+        // 骑行 20 秒还没有任何定位点：权限或 GPS 有问题，直接说
+        if !locNudgeShown, state.elapsed > 20, locationFixCount == 0 {
+            locNudgeShown = true
+            let status = Self.describe(recorder.authorizationStatus)
+            rideLog("no fix after 20s, auth=\(status)")
+            if recorder.authorizationStatus == .notDetermined || recorder.authorizationStatus == .denied {
+                cue("定位权限没开，咕咕记不了速度。请在系统设置里允许咕咕骑车使用定位", kind: .lifecycle)
+            } else {
+                cue("还没收到定位信号，到空旷处试试", kind: .lifecycle)
+            }
+        }
+
+        // 每 30 秒写一次骑行诊断
+        if Int(state.elapsed) % 30 == 0 {
+            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(Int(state.speedKmh)) hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
+        }
+
         // 骑行 30 秒仍无心率：主动说一次，别让用户对着“—”发呆
         if !hrNudgeShown, state.elapsed > 30, state.heartRateSource == .none {
             hrNudgeShown = true
@@ -293,17 +368,21 @@ final class RideEngine: ObservableObject {
 
     // MARK: - 数据吸收
 
-    private func absorb(location: CLLocation) {
+    private func absorb(location: CLLocation, speedKmh: Double) {
+        locationFixCount += 1
+        if locationFixCount == 1 {
+            rideLog("first fix: \(String(format: "%.5f,%.5f", location.coordinate.latitude, location.coordinate.longitude)) acc=\(Int(location.horizontalAccuracy))m")
+        }
         // 自动暂停状态下继续监听位置，速度起来就自动继续
         if phase == .paused {
-            if isAutoPaused, location.speed > 3 / 3.6 {
+            if isAutoPaused, speedKmh > 3 {
                 autoResume()
             }
             return
         }
         guard phase == .riding else { return }
-        let kmh = max(0, location.speed * 3.6)
-        state.speedKmh = kmh.isFinite ? kmh : 0
+        let kmh = speedKmh
+        state.speedKmh = kmh
         if let prev = lastLocation {
             let d = location.distance(from: prev)
             if d > 8 || kmh > 1.5 {

@@ -5,9 +5,12 @@ import CoreLocation
 final class LocationRecorder: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var lastLocation: CLLocation?
+    private var lastDate: Date?
 
-    /// 每个新定位点的回调（主线程）
-    var onLocation: ((CLLocation) -> Void)?
+    /// 每个新定位点的回调（主线程）：位置 + 算好的速度 km/h
+    var onLocation: ((CLLocation, Double) -> Void)?
+    /// 定位授权状态变化
+    var onAuthorizationChange: ((CLAuthorizationStatus) -> Void)?
 
     override init() {
         super.init()
@@ -20,40 +23,65 @@ final class LocationRecorder: NSObject, CLLocationManagerDelegate {
         manager.showsBackgroundLocationIndicator = true
     }
 
+    var authorizationStatus: CLAuthorizationStatus { manager.authorizationStatus }
+
+    var isAuthorized: Bool {
+        manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways
+    }
+
+    /// 必须显式请求，否则系统不会弹授权框，定位一个点都收不到
     func requestPermission() {
-        manager.requestWhenInUseAuthorization()
+        if manager.authorizationStatus == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        }
     }
 
     func start() {
         lastLocation = nil
+        lastDate = nil
         manager.startUpdatingLocation()
     }
 
     func stop() {
         manager.stopUpdatingLocation()
         lastLocation = nil
+        lastDate = nil
+    }
+
+    // MARK: - CLLocationManagerDelegate
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        onAuthorizationChange?(manager.authorizationStatus)
+        if isAuthorized {
+            manager.startUpdatingLocation()
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         for loc in locations {
             guard loc.horizontalAccuracy > 0, loc.horizontalAccuracy < 50 else { continue }
-            if let prev = lastLocation {
-                let d = loc.distance(from: prev)
-                // 过滤 GPS 漂移：静止时的小于 8 米位移忽略
-                if d > 8 || loc.speed > 1.5 {
-                    lastLocation = loc
-                    DispatchQueue.main.async { [weak self] in
-                        self?.onLocation?(loc)
-                    }
-                } else {
-                    lastLocation = loc
-                    DispatchQueue.main.async { [weak self] in
-                        self?.onLocation?(loc) // 速度归零类更新也上报，供界面归零
-                    }
+
+            // 速度兜底：GPS 常常给 -1（无效），用位移除以时间算出来
+            var kmh = loc.speed >= 0 ? loc.speed * 3.6 : -1
+            if kmh < 0, let prev = lastLocation, let prevDate = lastDate {
+                let dt = loc.timestamp.timeIntervalSince(prevDate)
+                if dt > 0.5 {
+                    kmh = loc.distance(from: prev) / dt * 3.6
                 }
-            } else {
-                lastLocation = loc
+            }
+            if kmh < 0 { kmh = 0 }
+            if !kmh.isFinite { kmh = 0 }
+
+            lastLocation = loc
+            lastDate = loc.timestamp
+            let speed = min(kmh, 90)
+            DispatchQueue.main.async { [weak self] in
+                self?.onLocation?(loc, speed)
             }
         }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("[coucou][gps] failed:", error.localizedDescription)
     }
 }

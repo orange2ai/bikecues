@@ -16,6 +16,7 @@ struct SettingsView: View {
                     section("传感器") {
                         row("Apple Watch 心率", sub: "手表上开个体能训练，心率经苹果健康实时上屏", value: engine.state.heartRateSource == .healthKit ? "已连接" : "未连接", on: engine.state.heartRateSource == .healthKit)
                             .onTapGesture { showHRHint = true }
+                        locationRow
                         row("GPS 速度", sub: "iPhone 定位，无需外设", value: "内置", on: true)
                         row("AirPods Pro 3 / 心率带", sub: "标准蓝牙心率源，实时", value: engine.state.heartRateSource == .bluetooth ? "已连接" : "未连接", on: engine.state.heartRateSource == .bluetooth)
                     }
@@ -63,6 +64,42 @@ struct SettingsView: View {
                 .background(Color(white: 0.07))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         }
+    }
+
+    /// 定位权限状态行：未授权可一键请求，被拒绝可跳系统设置
+    private var locationRow: some View {
+        Button {
+            switch engine.locationStatus {
+            case .notDetermined:
+                engine.requestLocationPermission()
+            case .denied, .restricted:
+                engine.openSystemSettings()
+            default:
+                break
+            }
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("定位权限").font(.body)
+                    Text(engine.locationStatus == .notDetermined
+                         ? "点一下请求授权，否则记不了速度"
+                         : "骑行速度、距离与轨迹的来源")
+                        .font(.caption)
+                        .foregroundStyle(.gray)
+                }
+                Spacer()
+                let ok = engine.locationStatus == .authorizedWhenInUse || engine.locationStatus == .authorizedAlways
+                Text(RideEngine.describe(engine.locationStatus))
+                    .font(.caption)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(ok ? Color.orange.opacity(0.12) : Color(white: 0.12))
+                    .foregroundStyle(ok ? Color.orange : Color.gray)
+                    .clipShape(Capsule())
+            }
+            .padding(14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var appVersion: String {
