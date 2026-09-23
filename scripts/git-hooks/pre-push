@@ -6,5 +6,5 @@ if [ "${COUCOU_SKIP_SMOKE:-0}" = "1" ]; then
   echo "[pre-push] COUCOU_SKIP_SMOKE=1，跳过冒烟测试（紧急通道，原因需写入提交信息）"
   exit 0
 fi
-DIR="$(cd "$(dirname "$0")/.." && pwd)"
+DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 exec "$DIR/scripts/smoke.sh"
