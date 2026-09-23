@@ -41,12 +41,14 @@ final class RideEngine: ObservableObject {
     private var lastHRDate: Date?
     private var hrNudgeShown = false
     private var locNudgeShown = false
+    private var lastAccuracy: Double = 0
+    private var lastSystemSpeed: Double = 0
     private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
 
     private init() {
-        recorder.onLocation = { [weak self] loc, kmh in
-            self?.absorb(location: loc, speedKmh: kmh)
+        recorder.onLocation = { [weak self] loc, kmh, meters in
+            self?.absorb(location: loc, speedKmh: kmh, meters: meters)
         }
         recorder.onAuthorizationChange = { [weak self] status in
             Task { @MainActor in
@@ -341,7 +343,7 @@ final class RideEngine: ObservableObject {
 
         // 每 30 秒写一次骑行诊断
         if Int(state.elapsed) % 30 == 0 {
-            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(Int(state.speedKmh)) hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
+            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(String(format: "%.1f", state.speedKmh)) acc=\(Int(lastAccuracy))m sysSpeed=\(String(format: "%.1f", lastSystemSpeed)) hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
         }
 
         // 骑行 30 秒仍无心率：主动说一次，别让用户对着“—”发呆
@@ -368,10 +370,12 @@ final class RideEngine: ObservableObject {
 
     // MARK: - 数据吸收
 
-    private func absorb(location: CLLocation, speedKmh: Double) {
+    private func absorb(location: CLLocation, speedKmh: Double, meters: Double) {
         locationFixCount += 1
+        lastAccuracy = location.horizontalAccuracy
+        lastSystemSpeed = location.speed
         if locationFixCount == 1 {
-            rideLog("first fix: \(String(format: "%.5f,%.5f", location.coordinate.latitude, location.coordinate.longitude)) acc=\(Int(location.horizontalAccuracy))m")
+            rideLog("first fix: \(String(format: "%.5f,%.5f", location.coordinate.latitude, location.coordinate.longitude)) acc=\(Int(location.horizontalAccuracy))m sysSpeed=\(String(format: "%.2f", location.speed)) sysAcc=\(String(format: "%.2f", location.speedAccuracy))")
         }
         // 自动暂停状态下继续监听位置，速度起来就自动继续
         if phase == .paused {
@@ -381,25 +385,21 @@ final class RideEngine: ObservableObject {
             return
         }
         guard phase == .riding else { return }
-        let kmh = speedKmh
-        state.speedKmh = kmh
-        if let prev = lastLocation {
-            let d = location.distance(from: prev)
-            if d > 8 || kmh > 1.5 {
-                state.distanceKm += d / 1000
-                hk.addDistanceSample(meters: d, at: location.timestamp)
-            }
+        state.speedKmh = speedKmh
+        if meters > 0 {
+            state.distanceKm += meters / 1000
+            hk.addDistanceSample(meters: meters, at: location.timestamp)
         }
-        lastLocation = location
         state.elevationM = location.altitude
-        routeBuffer.append(location)
-        if routeBuffer.count >= 10 {
-            hk.addRouteLocations(routeBuffer)
-            routeBuffer.removeAll()
+        if location.horizontalAccuracy < 30 {
+            routeBuffer.append(location)
+            if routeBuffer.count >= 10 {
+                hk.addRouteLocations(routeBuffer)
+                routeBuffer.removeAll()
+            }
         }
     }
 
-    private var lastLocation: CLLocation?
 
     func absorbHeartRate(_ bpm: Double, source: HeartRateSource, at date: Date = Date()) {
         lastHRDate = date
