@@ -101,33 +101,43 @@ struct RideSummaryView: View {
     }
 }
 
-/// 撒花：结束时立刻飘落，自由落体 + 左右摇摆，尾段淡出，保证完全消失不残留
+/// 撒花：左右两发礼炮从下角往里喷，拋物线 + 空气阻尼，翻滚收最后淡出
 struct ConfettiView: View {
     private struct Piece: Identifiable {
         let id: Int
-        let x0: CGFloat         // 水平起点 0...1
-        let delay: Double
-        let duration: Double
+        let x0: CGFloat          // 起点横纵（占屏比）
+        let y0: CGFloat
+        let vx0: CGFloat         // 初速 pt/s（vx0 向内，vy0 负 = 向上）
+        let vy0: CGFloat
         let size: CGFloat
         let color: Color
-        let spin: Double        // 总旋转角
-        let sway: CGFloat       // 左右摆幅
-        let swayFreq: Double    // 摆动次数
-        let round: Bool         // 圆片或纸屑
+        let spinRate: Double     // 翻滚角速度 deg/s
+        let round: Bool
+        let delay: Double
+        let life: Double         // 寿命秒，到期必淡出
     }
 
-    private let pieces: [Piece] = (0..<110).map { i in
-        Piece(
+    // 线性空气阻尼系数与重力（pt/s²），闭式解用
+    private static let drag: Double = 1.4
+    private static let gravity: Double = 1500
+
+    private let pieces: [Piece] = (0..<90).map { i in
+        let left = i % 2 == 0
+        let angle = Double.random(in: 55...80) * .pi / 180   // 与水平夹角
+        let speed = Double.random(in: 550...950)
+        let dir: Double = left ? 1 : -1
+        return Piece(
             id: i,
-            x0: .random(in: 0...1),
-            delay: .random(in: 0...0.5),
-            duration: .random(in: 2.2...4.0),
+            x0: left ? 0.04 : 0.96,
+            y0: 0.92,
+            vx0: CGFloat(dir * cos(angle) * speed),
+            vy0: CGFloat(-sin(angle) * speed),
             size: .random(in: 6...12),
             color: [Color.orange, Color.orange, Color.yellow, Color.white, Color(white: 0.5)].randomElement()!,
-            spin: .random(in: 240...760) * (Bool.random() ? 1 : -1),
-            sway: .random(in: 18...55),
-            swayFreq: .random(in: 1...2.5),
-            round: Bool.random()
+            spinRate: .random(in: 120...420) * (Bool.random() ? 1 : -1),
+            round: Bool.random(),
+            delay: .random(in: 0...0.35),
+            life: .random(in: 2.6...3.6)
         )
     }
 
@@ -137,20 +147,19 @@ struct ConfettiView: View {
         TimelineView(.animation) { timeline in
             let t = timeline.date.timeIntervalSince(startedAt)
             GeometryReader { geo in
-                let total = geo.size.height + 120
                 ForEach(pieces) { p in
-                    let raw = (t - p.delay) / p.duration
-                    if raw > 0, raw < 1 {
-                        // 平方递进 = 重力加速感
-                        let prog = raw * raw
+                    let age = t - p.delay
+                    if age > 0, age < p.life {
+                        let e = exp(-Self.drag * age)
+                        let inv = (1 - e) / Self.drag
+                        let x = p.x0 * geo.size.width + p.vx0 * inv
+                        let y = p.y0 * geo.size.height + (p.vy0 + Self.gravity / Self.drag) * inv - (Self.gravity / Self.drag) * age
+                        let raw = age / p.life
                         shape(p)
                             .frame(width: p.size, height: p.round ? p.size : p.size * 0.55)
-                            .position(
-                                x: p.x0 * geo.size.width + sin(raw * .pi * p.swayFreq * 2) * p.sway,
-                                y: -60 + total * prog
-                            )
-                            .rotationEffect(.degrees(p.spin * raw))
-                            .opacity(raw > 0.85 ? (1 - raw) / 0.15 : 1)
+                            .position(x: x, y: y)
+                            .rotationEffect(.degrees(p.spinRate * inv))
+                            .opacity(raw > 0.72 ? (1 - raw) / 0.28 : 1)
                     }
                 }
             }
