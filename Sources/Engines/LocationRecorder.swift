@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import UIKit
 
 /// GPS 记录引擎：速度与距离全部自己算。
 /// iOS 的 `location.speed` 在速度无效时经常给 0（而不是 -1），直接取用就会永远显示 0；
@@ -49,6 +50,8 @@ final class LocationRecorder: NSObject, CLLocationManagerDelegate {
     private var ky = Kalman()
     private var origin: CLLocationCoordinate2D?
     private var lastFixTime: Date?
+    /// 后台定位开关是否已设置（设置过就不用再设）
+    private var backgroundModeApplied = false
 
     /// 新定位点回调（主线程）：位置 + 自己算的速度 km/h + 本次新增距离（米）
     var onLocation: ((CLLocation, Double, Double) -> Void)?
@@ -61,9 +64,21 @@ final class LocationRecorder: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.activityType = .fitness          // 骑行优化
         manager.pausesLocationUpdatesAutomatically = false
-        // 锁屏/切后台继续记录：when-in-use 授权 + 后台定位模式，系统要求同时显示蓝色指示条
+        // 后台定位开关延迟到有前台 UI 时再设（applyBackgroundMode）
+        // 系统预热/后台拉起进程时设置会触发 CLClientIsBackgroundable 断言闪退
+    }
+
+    /// 锁屏/切后台继续记录：when-in-use 授权 + 后台定位模式，系统要求同时显示蓝色指示条。
+    /// 只有 App 处于活跃前台时才能设置；预热、后台拉起、devicectl 启动等
+    /// 无前台 UI 会话的状态下设置会触发 CLClientIsBackgroundable 断言闪退。
+    /// 骑行必经 GO 按钮（此时 App 必为 active），所以不会漏设。
+    private func applyBackgroundMode() {
+        guard !backgroundModeApplied,
+              Thread.isMainThread,
+              UIApplication.shared.applicationState == .active else { return }
         manager.allowsBackgroundLocationUpdates = true
         manager.showsBackgroundLocationIndicator = true
+        backgroundModeApplied = true
     }
 
     var authorizationStatus: CLAuthorizationStatus { manager.authorizationStatus }
@@ -81,6 +96,7 @@ final class LocationRecorder: NSObject, CLLocationManagerDelegate {
 
     func start() {
         reset()
+        applyBackgroundMode()
         manager.startUpdatingLocation()
     }
 
@@ -100,6 +116,7 @@ final class LocationRecorder: NSObject, CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         onAuthorizationChange?(manager.authorizationStatus)
         if isAuthorized {
+            applyBackgroundMode()
             manager.startUpdatingLocation()
         }
     }
