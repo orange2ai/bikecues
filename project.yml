@@ -44,21 +44,15 @@ targets:
     type: app-extension
     platform: iOS
     sources:
-      - WidgetExtension
+      - path: WidgetExtension
+        excludes:
+          - "Info.plist"
       - Shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.marswave.coucou.coucouWidgets
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: 咕咕骑车
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
+        INFOPLIST_FILE: WidgetExtension/Info.plist
         SUPPORTS_MACCATALYST: NO
-    info:
-      path: WidgetExtension/Info.plist
-      properties:
-        CFBundleDisplayName: 咕咕骑车
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     info:
       path: Info.plist
       properties:
