@@ -18,7 +18,10 @@ targets:
     platform: iOS
     sources:
       - Sources
+      - Shared
       - Assets.xcassets
+    dependencies:
+      - target: coucouWidgets
     entitlements:
       path: bikecues.entitlements
       properties:
@@ -37,9 +40,30 @@ targets:
         INFOPLIST_KEY_NSMotionUsageDescription: 咕咕骑车使用运动与健身数据提升骑行速度的计算精度。
         INFOPLIST_KEY_UIBackgroundModes: location audio
         SUPPORTS_MACCATALYST: NO
+  coucouWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - WidgetExtension
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.marswave.coucou.coucouWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: 咕咕骑车
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
+        SUPPORTS_MACCATALYST: NO
+    info:
+      path: WidgetExtension/Info.plist
+      properties:
+        CFBundleDisplayName: 咕咕骑车
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     info:
       path: Info.plist
       properties:
+        NSSupportsLiveActivities: true
+        NSSupportsLiveActivitiesFrequentUpdates: true
         UIBackgroundModes:
           - location
           - audio

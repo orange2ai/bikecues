@@ -8,13 +8,18 @@
 
 /* Begin PBXBuildFile section */
 		037367169C105E0BF0971B14 /* BikeCuesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2061CD9339D98324E3186C /* BikeCuesApp.swift */; };
+		2B2605F6F8F292F3FBF851FF /* coucouWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		333E96E2058C431957AC7EF0 /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E55BF04FE7B796252E181912 /* RideView.swift */; };
+		4469EFCAE402BB540A5AB083 /* RideActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */; };
+		48129B40361357F5B0C929D9 /* RideLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211011DC00BF05CF8CE2E519 /* RideLiveActivityWidget.swift */; };
+		4F58AB5A6BE9EC23C6C6EC50 /* RideLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F58C3F3E5E18F75B7F069DE3 /* RideLiveActivity.swift */; };
 		5E0A1406EC91603A56B078D3 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B77F42801441409805BBB4 /* LogView.swift */; };
 		7147F4B86085DEEC5BC75AF8 /* CueSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89890B9A6069886C033F4A06 /* CueSpeaker.swift */; };
 		7FA2DB8834C50F7018B2BC46 /* RideModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAAFC4FC5E6679385242DB18 /* RideModels.swift */; };
 		93D6BD361D528F24607239E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2CDE9672134DA0E28A328E68 /* Assets.xcassets */; };
 		9403624BF97790DCAAAB6B24 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341165BD9284251666AE22C8 /* RootTabView.swift */; };
 		9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235D90503C6B7C457366FFFD /* PraisePool.swift */; };
+		A28108F8FCC2B64B21C87193 /* RideActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */; };
 		B55140F0E03235BE2406FBBC /* HealthKitStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661852B9722343B8CDA1DB92 /* HealthKitStore.swift */; };
 		BC71C88E8578E18E194CC00F /* PedometerSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB9FCD46D233C862416F005 /* PedometerSource.swift */; };
 		CB50FCD05F46E453921BD09D /* CuesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21507F2C07B5CEF0CBA19136 /* CuesView.swift */; };
@@ -24,8 +29,33 @@
 		F38211EDED04F4303B0C1B42 /* RideSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D76E9C15C82F59F5C4E7D3 /* RideSummaryView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		4A6429F0FC652F60A943DAC5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6969082B24313B5EE38ECE64 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A65664900542BD3FC9ADB1B6;
+			remoteInfo = coucouWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DA6F4A76776DE4B689BA1971 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2B2605F6F8F292F3FBF851FF /* coucouWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		0C650AD87F0E203D6EE40DF0 /* RideEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEngine.swift; sourceTree = "<group>"; };
+		211011DC00BF05CF8CE2E519 /* RideLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLiveActivityWidget.swift; sourceTree = "<group>"; };
 		21507F2C07B5CEF0CBA19136 /* CuesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CuesView.swift; sourceTree = "<group>"; };
 		235D90503C6B7C457366FFFD /* PraisePool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PraisePool.swift; sourceTree = "<group>"; };
 		2CDE9672134DA0E28A328E68 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -35,15 +65,34 @@
 		53794E69F6644A06301C01D4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		63B77F42801441409805BBB4 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		661852B9722343B8CDA1DB92 /* HealthKitStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitStore.swift; sourceTree = "<group>"; };
+		82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = coucouWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		89890B9A6069886C033F4A06 /* CueSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CueSpeaker.swift; sourceTree = "<group>"; };
 		CBB9FCD46D233C862416F005 /* PedometerSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PedometerSource.swift; sourceTree = "<group>"; };
+		D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideActivityAttributes.swift; sourceTree = "<group>"; };
 		DAAFC4FC5E6679385242DB18 /* RideModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideModels.swift; sourceTree = "<group>"; };
 		DF2061CD9339D98324E3186C /* BikeCuesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeCuesApp.swift; sourceTree = "<group>"; };
 		E55BF04FE7B796252E181912 /* RideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideView.swift; sourceTree = "<group>"; };
+		F58C3F3E5E18F75B7F069DE3 /* RideLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLiveActivity.swift; sourceTree = "<group>"; };
 		F79F810A7E7CB719CDE07A44 /* coucou.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = coucou.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		050A38CFBA9A037F03482C3B /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		098C7A85955692DBEA362B3E /* WidgetExtension */ = {
+			isa = PBXGroup;
+			children = (
+				211011DC00BF05CF8CE2E519 /* RideLiveActivityWidget.swift */,
+			);
+			path = WidgetExtension;
+			sourceTree = "<group>";
+		};
 		1C1519E2F67442269021EC12 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -61,6 +110,7 @@
 				CBB9FCD46D233C862416F005 /* PedometerSource.swift */,
 				235D90503C6B7C457366FFFD /* PraisePool.swift */,
 				0C650AD87F0E203D6EE40DF0 /* RideEngine.swift */,
+				F58C3F3E5E18F75B7F069DE3 /* RideLiveActivity.swift */,
 			);
 			path = Engines;
 			sourceTree = "<group>";
@@ -69,6 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				F79F810A7E7CB719CDE07A44 /* coucou.app */,
+				82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,7 +139,9 @@
 			isa = PBXGroup;
 			children = (
 				2CDE9672134DA0E28A328E68 /* Assets.xcassets */,
+				050A38CFBA9A037F03482C3B /* Shared */,
 				AAB3B38F68573EB575D483D8 /* Sources */,
+				098C7A85955692DBEA362B3E /* WidgetExtension */,
 				A7387F323F71A97F7B9EEEC3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -115,10 +168,12 @@
 			buildPhases = (
 				C62DF6E53C7AB1836828A7BF /* Sources */,
 				309A84E13AB2859DBFA6D4C5 /* Resources */,
+				DA6F4A76776DE4B689BA1971 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BC2882255D33283FDB747323 /* PBXTargetDependency */,
 			);
 			name = coucou;
 			packageProductDependencies = (
@@ -126,6 +181,23 @@
 			productName = coucou;
 			productReference = F79F810A7E7CB719CDE07A44 /* coucou.app */;
 			productType = "com.apple.product-type.application";
+		};
+		A65664900542BD3FC9ADB1B6 /* coucouWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 377E52C971B2B0B0529A89B8 /* Build configuration list for PBXNativeTarget "coucouWidgets" */;
+			buildPhases = (
+				9BAEF2FF00A005F20A504A70 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = coucouWidgets;
+			packageProductDependencies = (
+			);
+			productName = coucouWidgets;
+			productReference = 82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -137,6 +209,10 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					7D5D70BF3570E65C105986D1 = {
+						DevelopmentTeam = CJSWWQ2B9V;
+						ProvisioningStyle = Automatic;
+					};
+					A65664900542BD3FC9ADB1B6 = {
 						DevelopmentTeam = CJSWWQ2B9V;
 						ProvisioningStyle = Automatic;
 					};
@@ -157,6 +233,7 @@
 			projectRoot = "";
 			targets = (
 				7D5D70BF3570E65C105986D1 /* coucou */,
+				A65664900542BD3FC9ADB1B6 /* coucouWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -173,6 +250,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		9BAEF2FF00A005F20A504A70 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A28108F8FCC2B64B21C87193 /* RideActivityAttributes.swift in Sources */,
+				48129B40361357F5B0C929D9 /* RideLiveActivityWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C62DF6E53C7AB1836828A7BF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -185,7 +271,9 @@
 				5E0A1406EC91603A56B078D3 /* LogView.swift in Sources */,
 				BC71C88E8578E18E194CC00F /* PedometerSource.swift in Sources */,
 				9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */,
+				4469EFCAE402BB540A5AB083 /* RideActivityAttributes.swift in Sources */,
 				EBD9B1B5DAEB92550AFCB6D6 /* RideEngine.swift in Sources */,
+				4F58AB5A6BE9EC23C6C6EC50 /* RideLiveActivity.swift in Sources */,
 				7FA2DB8834C50F7018B2BC46 /* RideModels.swift in Sources */,
 				F38211EDED04F4303B0C1B42 /* RideSummaryView.swift in Sources */,
 				333E96E2058C431957AC7EF0 /* RideView.swift in Sources */,
@@ -196,6 +284,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		BC2882255D33283FDB747323 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A65664900542BD3FC9ADB1B6 /* coucouWidgets */;
+			targetProxy = 4A6429F0FC652F60A943DAC5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		2AFB239BF8DA883E992F0DE0 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -204,7 +300,6 @@
 				CODE_SIGN_ENTITLEMENTS = bikecues.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "咕咕骑车";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "咕咕骑车读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "咕咕骑车将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。";
@@ -218,6 +313,44 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = ai.marswave.coucou;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		55D264057663DBE8C2A21C95 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "咕咕骑车";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = ai.marswave.coucou.coucouWidgets;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6AF47DAC59EA3D104684432C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "咕咕骑车";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = ai.marswave.coucou.coucouWidgets;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -292,7 +425,6 @@
 				CODE_SIGN_ENTITLEMENTS = bikecues.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "咕咕骑车";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "咕咕骑车读取心率等健康数据，用于实时显示与语音播报。数据保留在设备和苹果健康中。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "咕咕骑车将骑行记录写入苹果健康，与其他来源平起平坐，数据属于你。";
@@ -388,6 +520,15 @@
 			buildConfigurations = (
 				2AFB239BF8DA883E992F0DE0 /* Debug */,
 				E96843ABD85F4B481814B7E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		377E52C971B2B0B0529A89B8 /* Build configuration list for PBXNativeTarget "coucouWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6AF47DAC59EA3D104684432C /* Debug */,
+				55D264057663DBE8C2A21C95 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

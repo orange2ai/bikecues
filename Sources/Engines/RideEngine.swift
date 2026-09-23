@@ -77,6 +77,8 @@ final class RideEngine: ObservableObject {
             }
         }
         locationStatus = recorder.authorizationStatus
+        // 清理上一场骑行的残留实时活动（App 重启后骑行不会恢复）
+        Task { @MainActor in RideLiveActivity.shared.clearStale() }
         // App 启动即挂载心率监听：手表在练，设置页随时能看到"已连接"
         // （带调试参数启动时跳过，避免模拟器截图被授权弹窗挡住）
         if !CommandLine.arguments.contains(where: { $0.hasPrefix("-") }) {
@@ -238,6 +240,7 @@ final class RideEngine: ObservableObject {
         // 屏幕常亮：默认开，可在设置里关（关了也能后台记录与播报）
         UIApplication.shared.isIdleTimerDisabled = settings.keepScreenOn
         phase = .riding
+        RideLiveActivity.shared.start(state: state)
         startTicker()
 
         // 关键：先等授权完成，再起 workout 会话，否则会话起在未授权状态下静默失败
@@ -261,6 +264,7 @@ final class RideEngine: ObservableObject {
         phase = .paused
         isAutoPaused = false
         lastPauseStart = Date()
+        RideLiveActivity.shared.update(state: state, paused: true)
         recorder.stop()
         cue(settings.emotionalValue ? "已暂停。" + PraisePool.pause : "已暂停", kind: .lifecycle)
     }
@@ -271,6 +275,7 @@ final class RideEngine: ObservableObject {
         phase = .paused
         isAutoPaused = true
         lastPauseStart = Date()
+        RideLiveActivity.shared.update(state: state, paused: true)
         cue("已自动暂停，咕咕帮你盯着，动起来就继续", kind: .lifecycle)
     }
 
@@ -280,6 +285,7 @@ final class RideEngine: ObservableObject {
         phase = .riding
         isAutoPaused = false
         lowSpeedTicks = 0
+        RideLiveActivity.shared.update(state: state, paused: false)
         cue("继续骑行，咕咕盯着呢", kind: .lifecycle)
     }
 
@@ -289,6 +295,7 @@ final class RideEngine: ObservableObject {
         phase = .riding
         isAutoPaused = false
         lowSpeedTicks = 0
+        RideLiveActivity.shared.update(state: state, paused: false)
         recorder.start()
         pedometer.start()
         cue("继续骑行", kind: .lifecycle)
@@ -307,6 +314,7 @@ final class RideEngine: ObservableObject {
 
         // 一分钟以内的骑行视为测试，不写入健康，也不弹结算页
         if state.elapsed < 60 {
+            RideLiveActivity.shared.end(state: state)
             hk.discardWorkout()
             routeBuffer.removeAll()
             cue("骑了不到一分钟，咕咕当你在测试，没有记录", kind: .lifecycle)
@@ -314,6 +322,7 @@ final class RideEngine: ObservableObject {
         }
 
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
+        RideLiveActivity.shared.end(state: state)
         showSummary = true
 
         let kcal = 9.8 * max(state.elapsed, 0) / 60
@@ -358,6 +367,7 @@ final class RideEngine: ObservableObject {
         guard phase == .riding, let start = startDate else { return }
         state.elapsed = Date().timeIntervalSince(start) - pausedAccum
         state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
+        RideLiveActivity.shared.update(state: state, paused: false)
 
         // 低速自动暂停：连续 3 秒低于 1 km/h
         if settings.autoPause {
