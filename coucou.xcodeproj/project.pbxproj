@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		037367169C105E0BF0971B14 /* BikeCuesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2061CD9339D98324E3186C /* BikeCuesApp.swift */; };
 		114EF45229BF63C2A2BC0083 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECEDF899B01969B03CAEFC4 /* SmokeTests.swift */; };
+		125FD39862DEF751D966DD66 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 68A76BAE95C309BB1912D378 /* ConfettiSwiftUI */; };
 		2B2605F6F8F292F3FBF851FF /* coucouWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		333E96E2058C431957AC7EF0 /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E55BF04FE7B796252E181912 /* RideView.swift */; };
 		4469EFCAE402BB540A5AB083 /* RideActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */; };
@@ -85,6 +86,17 @@
 		F58C3F3E5E18F75B7F069DE3 /* RideLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideLiveActivity.swift; sourceTree = "<group>"; };
 		F79F810A7E7CB719CDE07A44 /* coucou.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = coucou.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4691B389AE5423CF2B1FEABF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				125FD39862DEF751D966DD66 /* ConfettiSwiftUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		050A38CFBA9A037F03482C3B /* Shared */ = {
@@ -188,6 +200,7 @@
 			buildPhases = (
 				C62DF6E53C7AB1836828A7BF /* Sources */,
 				309A84E13AB2859DBFA6D4C5 /* Resources */,
+				4691B389AE5423CF2B1FEABF /* Frameworks */,
 				DA6F4A76776DE4B689BA1971 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -197,6 +210,7 @@
 			);
 			name = coucou;
 			packageProductDependencies = (
+				68A76BAE95C309BB1912D378 /* ConfettiSwiftUI */,
 			);
 			productName = coucou;
 			productReference = F79F810A7E7CB719CDE07A44 /* coucou.app */;
@@ -269,6 +283,9 @@
 			);
 			mainGroup = BF30927A5A334DF7C790310F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C7D427BA8A2636AC7A04AF8A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A7387F323F71A97F7B9EEEC3 /* Products */;
 			projectDirPath = "";
@@ -622,6 +639,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C7D427BA8A2636AC7A04AF8A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		68A76BAE95C309BB1912D378 /* ConfettiSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C7D427BA8A2636AC7A04AF8A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
+			productName = ConfettiSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6969082B24313B5EE38ECE64 /* Project object */;
 }

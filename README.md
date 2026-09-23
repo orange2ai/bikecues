@@ -45,3 +45,6 @@
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE) —— 拷贝、修改、自用、分发都欢迎，唯一不许的是商业使用。商店发行版版权归作者所有。
+
+第三方依赖许可见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+

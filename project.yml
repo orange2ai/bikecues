@@ -12,6 +12,10 @@ settings:
     DEVELOPMENT_TEAM: CJSWWQ2B9V
     BIKECUES_HK: YES
     CODE_SIGN_STYLE: Automatic
+packages:
+  ConfettiSwiftUI:
+    url: https://github.com/simibac/ConfettiSwiftUI.git
+    from: 2.0.0
 targets:
   coucou:
     type: application
@@ -22,6 +26,7 @@ targets:
       - Assets.xcassets
     dependencies:
       - target: coucouWidgets
+      - package: ConfettiSwiftUI
     entitlements:
       path: bikecues.entitlements
       properties:
