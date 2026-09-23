@@ -66,3 +66,23 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ai.marswave.coucou.coucouWidgets
         INFOPLIST_FILE: WidgetExtension/Info.plist
         SUPPORTS_MACCATALYST: NO
+  coucouTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: coucou
+schemes:
+  coucou:
+    build:
+      targets:
+        coucou: all
+        coucouWidgets: all
+    test:
+      config: Debug
+      targets:
+        - coucouTests

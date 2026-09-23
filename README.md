@@ -33,6 +33,20 @@
 - [ ] 数据出口：Markdown 全量导出（供人阅读，也供 agent 分析）
 - [ ] AI 骑行分析（Coucou Pro）
 
+## 开发流程：冒烟测试（必须）
+
+运动软件要求严谨。任何改动在 `git push` 之前必须过一遍冒烟测试（已接 pre-push 钩子自动执行）：
+
+```bash
+./scripts/smoke.sh
+```
+
+覆盖：工程重新生成 → 模拟器全量编译 → 单元测试（Info.plist 完整性 / appex NSExtension / 卡尔曼测速与静止归零 / 实时活动编码 / 旧存档解码）→ 装机产物检查 → 模拟器安装启动 → 真实骑行生命周期（开骑 → 自动结束 → 结算页，全程进程存活）。
+
+紧急跳过：`COUCOU_SKIP_SMOKE=1 git push`，原因必须写进提交信息。
+
+新克隆仓库后记得启用钩子：`git config core.hooksPath scripts/git-hooks`
+
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE) —— 拷贝、修改、自用、分发都欢迎，唯一不许的是商业使用。商店发行版版权归作者所有。

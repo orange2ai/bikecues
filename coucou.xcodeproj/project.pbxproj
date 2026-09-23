@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		037367169C105E0BF0971B14 /* BikeCuesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2061CD9339D98324E3186C /* BikeCuesApp.swift */; };
+		114EF45229BF63C2A2BC0083 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECEDF899B01969B03CAEFC4 /* SmokeTests.swift */; };
 		2B2605F6F8F292F3FBF851FF /* coucouWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		333E96E2058C431957AC7EF0 /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E55BF04FE7B796252E181912 /* RideView.swift */; };
 		4469EFCAE402BB540A5AB083 /* RideActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */; };
@@ -37,6 +38,13 @@
 			remoteGlobalIDString = A65664900542BD3FC9ADB1B6;
 			remoteInfo = coucouWidgets;
 		};
+		FE785DE2506AB014F8BF82EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6969082B24313B5EE38ECE64 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7D5D70BF3570E65C105986D1;
+			remoteInfo = coucou;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,6 +68,7 @@
 		235D90503C6B7C457366FFFD /* PraisePool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PraisePool.swift; sourceTree = "<group>"; };
 		2CDE9672134DA0E28A328E68 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		341165BD9284251666AE22C8 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
+		3ECEDF899B01969B03CAEFC4 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
 		41D76E9C15C82F59F5C4E7D3 /* RideSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSummaryView.swift; sourceTree = "<group>"; };
 		4937850F3E610246EA28F22C /* LocationRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationRecorder.swift; sourceTree = "<group>"; };
 		53794E69F6644A06301C01D4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -67,6 +76,7 @@
 		661852B9722343B8CDA1DB92 /* HealthKitStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitStore.swift; sourceTree = "<group>"; };
 		82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = coucouWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		89890B9A6069886C033F4A06 /* CueSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CueSpeaker.swift; sourceTree = "<group>"; };
+		AB5069D2577504D4564CC9BD /* coucouTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = coucouTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBB9FCD46D233C862416F005 /* PedometerSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PedometerSource.swift; sourceTree = "<group>"; };
 		D6BBC6B08D2E434DA31F8C4C /* RideActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideActivityAttributes.swift; sourceTree = "<group>"; };
 		DAAFC4FC5E6679385242DB18 /* RideModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideModels.swift; sourceTree = "<group>"; };
@@ -115,10 +125,19 @@
 			path = Engines;
 			sourceTree = "<group>";
 		};
+		4F8A064CB30F94EBF2A3C3EC /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				3ECEDF899B01969B03CAEFC4 /* SmokeTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		A7387F323F71A97F7B9EEEC3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				F79F810A7E7CB719CDE07A44 /* coucou.app */,
+				AB5069D2577504D4564CC9BD /* coucouTests.xctest */,
 				82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */,
 			);
 			name = Products;
@@ -141,6 +160,7 @@
 				2CDE9672134DA0E28A328E68 /* Assets.xcassets */,
 				050A38CFBA9A037F03482C3B /* Shared */,
 				AAB3B38F68573EB575D483D8 /* Sources */,
+				4F8A064CB30F94EBF2A3C3EC /* Tests */,
 				098C7A85955692DBEA362B3E /* WidgetExtension */,
 				A7387F323F71A97F7B9EEEC3 /* Products */,
 			);
@@ -199,6 +219,24 @@
 			productReference = 82B2F877F2D02A46F3E4A1F7 /* coucouWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		F1FE234B7AB2383C2A739399 /* coucouTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 348952CAEC977150DC3DC0AB /* Build configuration list for PBXNativeTarget "coucouTests" */;
+			buildPhases = (
+				C37D4FFB6BAF07A431161B90 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8BAF692C7164E65898B322E2 /* PBXTargetDependency */,
+			);
+			name = coucouTests;
+			packageProductDependencies = (
+			);
+			productName = coucouTests;
+			productReference = AB5069D2577504D4564CC9BD /* coucouTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -213,6 +251,10 @@
 						ProvisioningStyle = Automatic;
 					};
 					A65664900542BD3FC9ADB1B6 = {
+						DevelopmentTeam = CJSWWQ2B9V;
+						ProvisioningStyle = Automatic;
+					};
+					F1FE234B7AB2383C2A739399 = {
 						DevelopmentTeam = CJSWWQ2B9V;
 						ProvisioningStyle = Automatic;
 					};
@@ -234,6 +276,7 @@
 			targets = (
 				7D5D70BF3570E65C105986D1 /* coucou */,
 				A65664900542BD3FC9ADB1B6 /* coucouWidgets */,
+				F1FE234B7AB2383C2A739399 /* coucouTests */,
 			);
 		};
 /* End PBXProject section */
@@ -256,6 +299,14 @@
 			files = (
 				A28108F8FCC2B64B21C87193 /* RideActivityAttributes.swift in Sources */,
 				48129B40361357F5B0C929D9 /* RideLiveActivityWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C37D4FFB6BAF07A431161B90 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				114EF45229BF63C2A2BC0083 /* SmokeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,6 +336,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		8BAF692C7164E65898B322E2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7D5D70BF3570E65C105986D1 /* coucou */;
+			targetProxy = FE785DE2506AB014F8BF82EE /* PBXContainerItemProxy */;
+		};
 		BC2882255D33283FDB747323 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A65664900542BD3FC9ADB1B6 /* coucouWidgets */;
@@ -341,6 +397,23 @@
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		704A20DDE3827A8424A8CD4D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.marswave.coucouTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/coucou.app/coucou";
 			};
 			name = Debug;
 		};
@@ -402,6 +475,23 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		BD09865EBAF8A4F4C785A717 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.marswave.coucouTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/coucou.app/coucou";
 			};
 			name = Release;
 		};
@@ -500,6 +590,15 @@
 			buildConfigurations = (
 				2AFB239BF8DA883E992F0DE0 /* Debug */,
 				E96843ABD85F4B481814B7E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		348952CAEC977150DC3DC0AB /* Build configuration list for PBXNativeTarget "coucouTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				704A20DDE3827A8424A8CD4D /* Debug */,
+				BD09865EBAF8A4F4C785A717 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
