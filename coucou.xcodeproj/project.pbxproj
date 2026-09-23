@@ -16,6 +16,7 @@
 		9403624BF97790DCAAAB6B24 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341165BD9284251666AE22C8 /* RootTabView.swift */; };
 		9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235D90503C6B7C457366FFFD /* PraisePool.swift */; };
 		B55140F0E03235BE2406FBBC /* HealthKitStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661852B9722343B8CDA1DB92 /* HealthKitStore.swift */; };
+		BC71C88E8578E18E194CC00F /* PedometerSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB9FCD46D233C862416F005 /* PedometerSource.swift */; };
 		CB50FCD05F46E453921BD09D /* CuesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21507F2C07B5CEF0CBA19136 /* CuesView.swift */; };
 		E419C6615DA5A02C4E165EA0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53794E69F6644A06301C01D4 /* SettingsView.swift */; };
 		E822641B757321525B8654E0 /* LocationRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4937850F3E610246EA28F22C /* LocationRecorder.swift */; };
@@ -33,6 +34,7 @@
 		63B77F42801441409805BBB4 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		661852B9722343B8CDA1DB92 /* HealthKitStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitStore.swift; sourceTree = "<group>"; };
 		89890B9A6069886C033F4A06 /* CueSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CueSpeaker.swift; sourceTree = "<group>"; };
+		CBB9FCD46D233C862416F005 /* PedometerSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PedometerSource.swift; sourceTree = "<group>"; };
 		DAAFC4FC5E6679385242DB18 /* RideModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideModels.swift; sourceTree = "<group>"; };
 		DF2061CD9339D98324E3186C /* BikeCuesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeCuesApp.swift; sourceTree = "<group>"; };
 		E55BF04FE7B796252E181912 /* RideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideView.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 				89890B9A6069886C033F4A06 /* CueSpeaker.swift */,
 				661852B9722343B8CDA1DB92 /* HealthKitStore.swift */,
 				4937850F3E610246EA28F22C /* LocationRecorder.swift */,
+				CBB9FCD46D233C862416F005 /* PedometerSource.swift */,
 				235D90503C6B7C457366FFFD /* PraisePool.swift */,
 				0C650AD87F0E203D6EE40DF0 /* RideEngine.swift */,
 			);
@@ -177,6 +180,7 @@
 				B55140F0E03235BE2406FBBC /* HealthKitStore.swift in Sources */,
 				E822641B757321525B8654E0 /* LocationRecorder.swift in Sources */,
 				5E0A1406EC91603A56B078D3 /* LogView.swift in Sources */,
+				BC71C88E8578E18E194CC00F /* PedometerSource.swift in Sources */,
 				9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */,
 				EBD9B1B5DAEB92550AFCB6D6 /* RideEngine.swift in Sources */,
 				7FA2DB8834C50F7018B2BC46 /* RideModels.swift in Sources */,

@@ -22,6 +22,9 @@ final class RideEngine: ObservableObject {
 
     // MARK: - 内部
     private let recorder = LocationRecorder()
+    private let pedometer = PedometerSource()
+    private var lastGpsKmh = 0.0
+    private var lastPedTime: Date?
     private let hk = HealthKitStore.shared
     private var startDate: Date?
     private var pausedAccum: TimeInterval = 0
@@ -45,6 +48,7 @@ final class RideEngine: ObservableObject {
     private var lastSystemSpeed: Double = 0
     private var firstFix: CLLocation?
     private var lastKnownLocation: CLLocation?
+    private var pedKmhForLog = 0.0
     private var gpsNudgeShown = false
     private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
@@ -52,6 +56,9 @@ final class RideEngine: ObservableObject {
     private init() {
         recorder.onLocation = { [weak self] loc, kmh, meters in
             self?.absorb(location: loc, speedKmh: kmh, meters: meters)
+        }
+        pedometer.onSpeed = { [weak self] kmh in
+            self?.absorbPedometer(kmh)
         }
         recorder.onAuthorizationChange = { [weak self] status in
             Task { @MainActor in
@@ -106,6 +113,26 @@ final class RideEngine: ObservableObject {
         } else {
             try? text.write(to: url, atomically: true, encoding: .utf8)
         }
+    }
+
+    /// 计步器兜底：GPS 被挡住（室内/隧道）时用运动协处理器估算速度
+    private func absorbPedometer(_ kmh: Double) {
+        guard phase == .riding else { return }
+        // GPS 能给速度时以 GPS 为准
+        guard lastGpsKmh < 0.6 else { return }
+        let now = Date()
+        defer { lastPedTime = now }
+        guard kmh > 0.6 else { return }
+        if let prev = lastPedTime {
+            let dt = now.timeIntervalSince(prev)
+            if dt > 0.2, dt < 10 {
+                let meters = kmh / 3.6 * dt
+                state.distanceKm += meters / 1000
+                hk.addDistanceSample(meters: meters, at: now)
+            }
+        }
+        state.speedKmh = kmh
+        pedKmhForLog = kmh
     }
 
     /// 手动请求定位权限（设置页用）
@@ -181,6 +208,9 @@ final class RideEngine: ObservableObject {
 
         recorder.requestPermission()   // 必须显式请求，否则系统不弹框、定位收不到点
         recorder.start()
+        lastGpsKmh = 0
+        lastPedTime = nil
+        pedometer.start()
         locationStatus = recorder.authorizationStatus
         locationFixCount = 0
         locNudgeShown = false
@@ -245,6 +275,7 @@ final class RideEngine: ObservableObject {
         isAutoPaused = false
         lowSpeedTicks = 0
         recorder.start()
+        pedometer.start()
         cue("继续骑行", kind: .lifecycle)
     }
 
@@ -252,6 +283,7 @@ final class RideEngine: ObservableObject {
         guard phase != .idle else { return }
         let end = Date()
         recorder.stop()
+        pedometer.stop()
         let start = startDate ?? end.addingTimeInterval(-max(state.elapsed, 1))
         CueSpeaker.shared.deactivateSession()
         stopTicker()
@@ -352,7 +384,7 @@ final class RideEngine: ObservableObject {
                 guard let last = lastKnownLocation else { return 0 }
                 return first.distance(from: last)
             }) ?? 0
-            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(String(format: "%.1f", state.speedKmh)) acc=\(Int(lastAccuracy))m sysSpeed=\(String(format: "%.1f", lastSystemSpeed)) moved=\(Int(moved))m hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
+            rideLog("t=\(Int(state.elapsed))s fixes=\(locationFixCount) dist=\(String(format: "%.2f", state.distanceKm))km speed=\(String(format: "%.1f", state.speedKmh)) acc=\(Int(lastAccuracy))m sysSpeed=\(String(format: "%.1f", lastSystemSpeed)) moved=\(Int(moved))m ped=\(String(format: "%.1f", pedKmhForLog)) hr=\(state.heartRateSource == .none ? "无" : "\(Int(state.heartRate ?? 0))")")
         }
 
         // 60 秒了位置几乎没挪：不是没权限，是 GPS 被挡了（室内 Wi-Fi 定位感知不到米级移动）
@@ -393,6 +425,7 @@ final class RideEngine: ObservableObject {
 
     private func absorb(location: CLLocation, speedKmh: Double, meters: Double) {
         locationFixCount += 1
+        lastGpsKmh = speedKmh
         lastAccuracy = location.horizontalAccuracy
         lastSystemSpeed = location.speed
         lastKnownLocation = location
