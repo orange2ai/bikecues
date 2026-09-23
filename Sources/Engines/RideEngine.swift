@@ -50,6 +50,12 @@ final class RideEngine: ObservableObject {
     private var lastKnownLocation: CLLocation?
     private var pedKmhForLog = 0.0
     private var gpsNudgeShown = false
+    // 全程心率统计（结算页读）
+    private(set) var rideHrSum: Double = 0
+    private(set) var rideHrCount = 0
+    private(set) var rideMaxHr: Double?
+    /// 结束后的结算页开关
+    @Published var showSummary = false
     private var lastHRPoll: Date?
     private var hrWatchdog: Timer?
 
@@ -72,8 +78,10 @@ final class RideEngine: ObservableObject {
         }
         locationStatus = recorder.authorizationStatus
         // App 启动即挂载心率监听：手表在练，设置页随时能看到"已连接"
-        Task { @MainActor in
-            try? await hk.requestAuthorization()
+        // （带调试参数启动时跳过，避免模拟器截图被授权弹窗挡住）
+        if !CommandLine.arguments.contains(where: { $0.hasPrefix("-") }) {
+            Task { @MainActor in
+                try? await hk.requestAuthorization()
             self.healthAuthorized = self.hk.isAvailable
             self.hrAuthDenied = self.hk.heartRateAuthDenied()
             self.hrLog("auth done, available=\(self.hk.isAvailable), denied=\(self.hrAuthDenied)")
@@ -85,6 +93,7 @@ final class RideEngine: ObservableObject {
                 }
             }
             self.startHRWatchdog()
+            }
         }
     }
 
@@ -123,6 +132,7 @@ final class RideEngine: ObservableObject {
         let now = Date()
         defer { lastPedTime = now }
         guard kmh > 0.6 else { return }
+        if kmh > state.maxSpeedKmh { state.maxSpeedKmh = kmh }
         if let prev = lastPedTime {
             let dt = now.timeIntervalSince(prev)
             if dt > 0.2, dt < 10 {
@@ -205,6 +215,11 @@ final class RideEngine: ObservableObject {
         pausedAccum = 0
         hrNudgeShown = false
         cues.removeAll()
+        state = RideState()
+        rideHrSum = 0
+        rideHrCount = 0
+        rideMaxHr = nil
+        showSummary = false
 
         recorder.requestPermission()   // 必须显式请求，否则系统不弹框、定位收不到点
         recorder.start()
@@ -290,13 +305,16 @@ final class RideEngine: ObservableObject {
         UIApplication.shared.isIdleTimerDisabled = false
         phase = .idle
 
-        // 一分钟以内的骑行视为测试，不写入健康
+        // 一分钟以内的骑行视为测试，不写入健康，也不弹结算页
         if state.elapsed < 60 {
             hk.discardWorkout()
             routeBuffer.removeAll()
             cue("骑了不到一分钟，咕咕当你在测试，没有记录", kind: .lifecycle)
             return
         }
+
+        state.averageSpeedKmh = state.elapsed > 5 ? state.distanceKm / (state.elapsed / 3600) : 0
+        showSummary = true
 
         let kcal = 9.8 * max(state.elapsed, 0) / 60
         if kcal > 0.5 { hk.addEnergySample(kcal: kcal, start: start, end: end) }
@@ -442,6 +460,7 @@ final class RideEngine: ObservableObject {
         }
         guard phase == .riding else { return }
         state.speedKmh = speedKmh
+        if speedKmh > state.maxSpeedKmh { state.maxSpeedKmh = speedKmh }
         if meters > 0 {
             state.distanceKm += meters / 1000
             hk.addDistanceSample(meters: meters, at: location.timestamp)
@@ -464,6 +483,9 @@ final class RideEngine: ObservableObject {
         guard phase == .riding else { return }
         hrSegSum += bpm
         hrSegCount += 1
+        rideHrSum += bpm
+        rideHrCount += 1
+        rideMaxHr = max(rideMaxHr ?? 0, bpm)
     }
 
     // MARK: - 触发器

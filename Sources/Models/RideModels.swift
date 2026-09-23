@@ -8,6 +8,7 @@ struct RideState {
     var heartRate: Double? = nil      // 实时心率
     var heartRateSource: HeartRateSource = .none
     var averageSpeedKmh: Double = 0
+    var maxSpeedKmh: Double = 0
     var calories: Double = 0
     var cadence: Double? = nil        // 踏频（外接传感器，MVP 可空）
     var elevationM: Double = 0

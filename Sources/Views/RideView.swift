@@ -3,6 +3,7 @@ import SwiftUI
 struct RideView: View {
     @EnvironmentObject var engine: RideEngine
     @State private var showHRHint = false
+    @State private var countdown: Int? = nil   // 3、2、1、0(=GO)、nil=关
 
 
     var body: some View {
@@ -13,6 +14,49 @@ struct RideView: View {
             }
         }
         .background(.black)
+        .overlay {
+            if engine.showSummary {
+                RideSummaryView()
+                    .transition(.opacity)
+            } else if let c = countdown {
+                countdownOverlay(c)
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    // MARK: - GO 倒数（仿体能训练）：3、2、1、GO 后才真正开骑
+    private func beginCountdown() {
+        guard countdown == nil, engine.phase == .idle else { return }
+        withAnimation(.easeIn(duration: 0.15)) { countdown = 3 }
+        scheduleCountdownTick(3)
+    }
+
+    private func scheduleCountdownTick(_ n: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + (n == 0 ? 0.8 : 1.0)) {
+            guard let cur = countdown, cur == n else { return }
+            let next = n - 1
+            if next == -1 {
+                countdown = nil
+                engine.startRide()
+            } else {
+                withAnimation(.easeIn(duration: 0.15)) { countdown = next }
+                scheduleCountdownTick(next)
+            }
+        }
+    }
+
+    private func countdownOverlay(_ c: Int) -> some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            Text(c == 0 ? "GO" : "\(c)")
+                .font(.system(size: 140, weight: .ultraLight))
+                .monospacedDigit()
+                .foregroundStyle(c == 0 ? Color.orange : .white)
+                .contentTransition(.opacity)
+                .id(c)
+                .transition(.scale(scale: 1.6).combined(with: .opacity))
+        }
     }
 
     // MARK: - 未开始：名字在上方，两行，足够大
@@ -33,7 +77,7 @@ struct RideView: View {
 
             Spacer()
 
-            Button(action: { engine.startRide() }) {
+            Button(action: { beginCountdown() }) {
                 Text("GO")
                     .font(.system(size: 46, weight: .heavy))
                     .foregroundStyle(.black)

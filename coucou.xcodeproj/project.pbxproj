@@ -21,6 +21,7 @@
 		E419C6615DA5A02C4E165EA0 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53794E69F6644A06301C01D4 /* SettingsView.swift */; };
 		E822641B757321525B8654E0 /* LocationRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4937850F3E610246EA28F22C /* LocationRecorder.swift */; };
 		EBD9B1B5DAEB92550AFCB6D6 /* RideEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C650AD87F0E203D6EE40DF0 /* RideEngine.swift */; };
+		F38211EDED04F4303B0C1B42 /* RideSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D76E9C15C82F59F5C4E7D3 /* RideSummaryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,7 @@
 		235D90503C6B7C457366FFFD /* PraisePool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PraisePool.swift; sourceTree = "<group>"; };
 		2CDE9672134DA0E28A328E68 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		341165BD9284251666AE22C8 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
+		41D76E9C15C82F59F5C4E7D3 /* RideSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSummaryView.swift; sourceTree = "<group>"; };
 		4937850F3E610246EA28F22C /* LocationRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationRecorder.swift; sourceTree = "<group>"; };
 		53794E69F6644A06301C01D4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		63B77F42801441409805BBB4 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 			children = (
 				21507F2C07B5CEF0CBA19136 /* CuesView.swift */,
 				63B77F42801441409805BBB4 /* LogView.swift */,
+				41D76E9C15C82F59F5C4E7D3 /* RideSummaryView.swift */,
 				E55BF04FE7B796252E181912 /* RideView.swift */,
 				341165BD9284251666AE22C8 /* RootTabView.swift */,
 				53794E69F6644A06301C01D4 /* SettingsView.swift */,
@@ -184,6 +187,7 @@
 				9E9EDE1128C2C5FD0BBFC5E8 /* PraisePool.swift in Sources */,
 				EBD9B1B5DAEB92550AFCB6D6 /* RideEngine.swift in Sources */,
 				7FA2DB8834C50F7018B2BC46 /* RideModels.swift in Sources */,
+				F38211EDED04F4303B0C1B42 /* RideSummaryView.swift in Sources */,
 				333E96E2058C431957AC7EF0 /* RideView.swift in Sources */,
 				9403624BF97790DCAAAB6B24 /* RootTabView.swift in Sources */,
 				E419C6615DA5A02C4E165EA0 /* SettingsView.swift in Sources */,
